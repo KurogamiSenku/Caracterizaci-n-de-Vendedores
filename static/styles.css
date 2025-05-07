@@ -1,0 +1,356 @@
+/* Estilos generales */
+body {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    margin: 0;
+    padding: 0;
+    background-color: #f0fdf4;
+    color: #343a40;
+}
+
+.container {
+    max-width: 1200px; /* Aumentado para mayor consistencia */
+    margin: auto;
+    padding: 0 20px;
+}
+
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #15803d;
+}
+
+.navbar-brand img {
+    height: 50px; /* Aumentado para mayor consistencia */
+    margin-right: 10px;
+}
+
+.navbar-brand span {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.navbar-nav {
+    display: flex;
+    list-style: none;
+    margin-left: auto;
+    padding: 0;
+}
+
+.nav-item {
+    margin-right: 1rem;
+}
+
+.nav-item:last-child {
+    margin-right: 0;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #374151;
+    font-weight: 500;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #15803d;
+}
+
+.nav-link.active {
+    font-weight: 700;
+}
+
+.jumbotron {
+    background-color: #f0fdf4;
+    padding: 4rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.jumbotron h1 {
+    font-size: 2.75rem;
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 1.5rem;
+}
+
+.jumbotron p {
+    font-size: 1.2rem;
+    color: #4b5563;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+}
+
+.btn-primary {
+    background-color: #15803d;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #166534;
+}
+
+.section-title {
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #15803d;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -1rem;
+    margin-right: -1rem;
+}
+
+.col-md-6 {
+    flex: 0 0 auto;
+    width: 50%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.card {
+    background-color: #fff;
+    border: 1px solid #d1fae5;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    margin-bottom: 2rem;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    font-size: 1.1rem;
+    color: #4b5563;
+    line-height: 1.8;
+}
+
+.list-unstyled {
+    padding-left: 0;
+    list-style: none;
+}
+
+.list-unstyled li::before {
+    content: '•';
+    color: #15803d;
+    margin-right: 0.5rem;
+}
+
+.text-muted {
+    color: #6b7280;
+}
+
+.bg-light {
+    background-color: #f8fafc;
+}
+
+/* Estilos de la página de predicción */
+#prediction-form {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+#prediction-form label {
+    font-weight: 500;
+    color: #0c4a6e;
+    margin-bottom: 0.5rem;
+}
+
+#prediction-form .form-control {
+    border: 2px solid #a0aec0;
+    border-radius: 5px;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.2s ease;
+}
+
+#prediction-form .form-control:focus {
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+    outline: none;
+}
+
+#prediction-form select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23a0aec0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px;
+    padding-right: 2.5rem;
+}
+
+#prediction-form select.form-control:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%2334d399' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+#prediction-form button {
+    background-color: #34d399;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    border: none;
+    transition: background-color 0.2s ease;
+    width: 100%;
+}
+
+#prediction-form button:hover {
+    background-color: #2cb787;
+}
+
+#prediction-results {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #edf2f7;
+    border-radius: 10px;
+    border: 1px solid #a0aec0;
+}
+
+#prediction-results h3 {
+    font-size: 1.5rem;
+    color: #0c4a6e;
+    margin-bottom: 1rem;
+}
+
+#resultado-exitoso {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border-color: #16a34a;
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+#resultado-fallido {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #ef4444;
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+/* Estilos del footer */
+.footer {
+    background-color: #e2e8f0;
+    color: #4a5568;
+    padding: 1rem 0;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.footer p {
+    font-size: 0.9rem;
+}
+
+/* Media queries para responsividad */
+@media (max-width: 992px) {
+    .navbar-nav .nav-link {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+
+    #prediction-form button {
+        width: 100%;
+    }
+
+    .col-md-6 {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .section-title h2 {
+        font-size: 2rem;
+    }
+
+    #prediction-form {
+        padding: 1rem;
+    }
+
+    .jumbotron {
+        padding: 2rem 1rem;
+    }
+
+    .jumbotron h1 {
+        font-size: 2rem;
+    }
+
+    .jumbotron p {
+        font-size: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-brand img {
+        height: 40px;
+    }
+
+    .navbar-brand span {
+        font-size: 1rem;
+    }
+
+    .section-title h2 {
+        font-size: 1.75rem;
+    }
+
+    .footer p {
+        font-size: 0.8rem;
+    }
+}
+
+.navbar-brand img {
+    max-height: 40px; 
+    margin-right: 10px; 
+}

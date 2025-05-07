@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Vendedores Informales Chía</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="static/images/ESCUDO-COLOR-H.png">
+                <span class="ms-2">Proyecto Vendedores Chía</span>
+            </a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/datos">Datos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/prediccion">Predicción</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/graficas">Gráficas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/referencias">Referencias</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="jumbotron">
+        <div class="container">
+            <h1 class="display-4">Modelo de Segmentación para Vendedores Ambulantes en Chía</h1>
+            <p class="lead">
+                Predicción de Patrones de Asentamiento y Desarrollo Sostenible
+            </p>
+            <a href="/prediccion" class="btn btn-primary btn-lg">
+                Realizar Predicción
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="section-title text-center mb-5">
+            <h2>Descripción del Proyecto</h2>
+        </section>
+        <section>
+            <p>
+                En el municipio de Chía, los vendedores informales representan una parte importante del entorno económico,
+                pero sus características y condiciones aún no están suficientemente documentadas. Este proyecto busca
+                caracterizarlos mediante técnicas de análisis y predicción de datos, con el fin de identificar patrones y
+                perfiles que puedan ser útiles para el diseño de políticas públicas o programas de apoyo.
+            </p>
+            <p>
+                Desde la ingeniería de sistemas, se aplican herramientas de ciencia de datos que permiten transformar la
+                información recolectada en conocimiento útil para la toma de decisiones. El objetivo general es desarrollar
+                un modelo de análisis y predicción que permita caracterizar los perfiles de los vendedores informales del
+                municipio de Chía, utilizando técnicas de ciencia de datos y *machine learning*, con el fin de generar
+                información útil para la toma de decisiones en políticas de inclusión y desarrollo económico.
+            </p>
+        </section>
+        <section class="section-title text-center mt-5 mb-5">
+            <h2>Objetivos del Proyecto</h2>
+        </section>
+        <section class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Objetivo General</h3>
+                        <p class="card-text">
+                            Desarrollar un modelo de análisis y predicción que permita caracterizar los perfiles de los
+                            vendedores informales del municipio de Chía, utilizando técnicas de ciencia de datos y *machine learning*,
+                            con el fin de generar información útil para la toma de decisiones en políticas de inclusión
+                            y desarrollo económico.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Objetivos Específicos</h3>
+                        <ul class="list-unstyled">
+                            <li>Recolectar y depurar los datos existentes sobre los vendedores informales del municipio de Chía.</li>
+                            <li>Identificar las variables clave que influyen en las condiciones laborales y económicas de los vendedores informales.</li>
+                            <li>Aplicar técnicas de análisis exploratorio para visualizar patrones, tendencias y correlaciones en los datos.</li>
+                            <li>Diseñar y entrenar un modelo de *machine learning* para clasificar y predecir perfiles de vendedores informales.</li>
+                            <li>Evaluar el desempeño del modelo predictivo y su capacidad para generar información confiable.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-light text-center py-4 mt-5">
+        <p class="text-muted">
+            Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.
+        </p>
+    </footer>
+</body>
+</html>
