@@ -7,24 +7,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm py-3">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
+            <a class="navbar-brand" href="/">
                 <img src="static/images/ESCUDO-COLOR-H.png" alt="Logo Universidad de Cundinamarca">
-                <span class="ms-2">Proyecto Vendedores Chía</span>
+                <span>Proyecto Vendedores Chía</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="/">Inicio</a>
                     </li>
@@ -37,7 +33,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/graficas">Gráficas</a>
                     </li>
-                     <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link" href="/referencias">Referencias</a>
                     </li>
                 </ul>
@@ -46,85 +42,100 @@
     </nav>
 
     <main class="container">
-        <section id="data-section" class="section-wrapper">
-            <div class="section-title text-center mb-5">
-                <h2>Datos de Vendedores Informales en Chía</h2>
-                <p class="data-description">
+        <div class="jumbotron">
+            <h1>Datos de Vendedores Informales en Chía</h1>
+            <p>Explora el conjunto de datos completo de vendedores informales registrados en el municipio</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger mb-4">
+            <h4>Error</h4>
+            <p>{{ error }}</p>
+
+            {% if debug_info %}
+            <div class="debug-section mt-3">
+                <h5>Información de Depuración:</h5>
+                <ul class="list-unstyled">
+                    {% for key, value in debug_info.items() %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if debug_info and not error %}
+        <div class="alert alert-info mb-4">
+            <h4>Información del CSV</h4>
+            <ul class="list-unstyled">
+                {% for key, value in debug_info.items() %}
+                <li><strong>{{ key }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="card-text">
                     A continuación, se presenta el dataset que contiene la información de los vendedores informales del municipio de Chía.
                     Utilice las herramientas de búsqueda y filtrado para explorar los datos.
                 </p>
             </div>
-            <div class="table-responsive">
-                <table id="tabla-vendedores" class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Nº</th>
-                            <th>Mes de Radicación</th>
-                            <th>Género</th>
-                            <th>Edad</th>
-                            <th>Adulto Mayor</th>
-                            <th>Nacionalidad</th>
-                            <th>Producto que Vende</th>
-                            <th>Detalle del Producto</th>
-                            <th>Persona en Discapacidad</th>
-                            <th>Certificado RUV</th>
-                            <th>Certificado Resguardo</th>
-                            <th>Identificado LGBTIQ+</th>
-                            <th>Pertenece a Asociación</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if error %}
-                            <tr>
-                                <td colspan="13" class="text-center">{{ error }}</td>
-                            </tr>
-                        {% else %}
-                            {% for fila in datos %}
-                                <tr>
-                                    <td>{{ fila['Nº'] }}</td>
-                                    <td>{{ fila['Mes de Radicación'] }}</td>
-                                    <td>{{ fila['Género'] }}</td>
-                                    <td>{{ fila['Edad'] }}</td>
-                                    <td>{{ fila['Adulto Mayor'] }}</td>
-                                    <td>{{ fila['Nacionalidad'] }}</td>
-                                    <td>{{ fila['Producto que Vende'] }}</td>
-                                    <td>{{ fila['Detalle del Producto'] }}</td>
-                                    <td>{{ fila['Persona en Discapacidad'] }}</td>
-                                    <td>{{ fila['Certificado RUV'] }}</td>
-                                    <td>{{ fila['Certificado Resguardo'] }}</td>
-                                    <td>{{ fila['Identificado LGBTIQ+'] }}</td>
-                                    <td>{{ fila['Pertenece a Asociación'] }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="section-title mt-5">
-                <h3>Descripción de las Variables</h3>
+        </div>
+
+        <div class="table-responsive">
+            <table id="tabla-vendedores" style="width:100%; min-width:1200px">
+                <thead>
+                    <tr>
+                        {% for columna in datos[0].keys() %}
+                        <th>{{ columna }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in datos %}
+                    <tr>
+                        {% for valor in fila.values() %}
+                        <td>{{ valor }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Descripción de las Variables</h3>
                 <ul class="list-unstyled">
                     <li><strong>Nº:</strong> Identificador único para cada registro.</li>
-                    <li><strong>MES DE RADICACIÓN:</strong> Mes en el que se registró la información del emprendedor en la base de datos.</li>
+                    <li><strong>MES DE RADICACIÓN:</strong> Mes en el que se registró la información del emprendedor.</li>
                     <li><strong>GENERO:</strong> Género del emprendedor.</li>
                     <li><strong>EDAD:</strong> Edad del emprendedor en años.</li>
                     <li><strong>ADULTO MAYOR:</strong> Indica si el emprendedor es considerado adulto mayor.</li>
                     <li><strong>NACIONALIDAD:</strong> País de origen del emprendedor.</li>
-                    <li><strong>PRODUCTO QUE VENDE:</strong> Descripción del producto o servicio principal que ofrece el emprendedor.</li>
-                    <li><strong>DETALLE DEL PRODUCTO:</strong> Descripción más detallada del producto o servicio, incluyendo características, materiales, etc.</li>
-                    <li><strong>PERSONA EN DISCAPACIDAD:</strong> Indica si el emprendedor tiene alguna discapacidad.</li>
-                    <li><strong>CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO:</strong> Indica si el emprendedor es una víctima reconocida del conflicto armado.</li>
-                    <li><strong>CERTIFICADO RESGUARDO INDÍGENA:</strong> Indica si el emprendedor pertenece a un pueblo indígena y cuenta con la certificación correspondiente.</li>
-                    <li><strong>IDENTIFICADO LGBTIQ+:</strong> Indica si el emprendedor se identifica como parte de la comunidad LGBTIQ+.</li>
-                    <li><strong>PERTENECE A ALGUNA ASOCIACIÓN:</strong> Indica si el emprendedor forma parte de alguna asociación o gremio.</li>
+                    <li><strong>PRODUCTO QUE VENDE:</strong> Producto o servicio principal que ofrece.</li>
+                    <li><strong>DETALLE DEL PRODUCTO:</strong> Características detalladas del producto.</li>
+                    <li><strong>PERSONA EN DISCAPACIDAD:</strong> Indica si tiene alguna discapacidad.</li>
+                    <li><strong>CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO:</strong> Víctima del conflicto armado.</li>
+                    <li><strong>CERTIFICADO RESGUARDO INDÍGENA:</strong> Pertenencia a pueblo indígena.</li>
+                    <li><strong>IDENTIFICADO LGBTIQ+:</strong> Pertenece a la comunidad LGBTIQ+.</li>
+                    <li><strong>PERTENECE A ALGUNA ASOCIACIÓN:</strong> Forma parte de asociación o gremio.</li>
                 </ul>
             </div>
-        </section>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-primary">Volver al Inicio</a>
+        </div>
     </main>
 
-    <footer class="bg-light text-center py-4 mt-5">
-        <p class="text-muted">
-            Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.
-        </p>
+    <footer class="footer">
+        <div class="container">
+            <p>Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.</p>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -132,31 +143,65 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Mapeo de meses a su orden numérico
+            const mesesOrden = {
+                'ENERO': 1,
+                'FEBRERO': 2,
+                'MARZO': 3,
+                'ABRIL': 4,
+                'MAYO': 5,
+                'JUNIO': 6,
+                'JULIO': 7,
+                'AGOSTO': 8,
+                'SEPTIEMBRE': 9,
+                'OCTUBRE': 10,
+                'NOVIEMBRE': 11,
+                'DICIEMBRE': 12
+            };
+
             $('#tabla-vendedores').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es_es.json'
-                },
                 responsive: true,
                 autoWidth: false,
                 deferRender: true,
                 scrollX: true,
                 displayLength: 10,
                 lengthMenu: [10, 20, 30, 50, 100],
-                search: {
-                    regex: true
-                },
-                 columnDefs: [
-                    {
-                        targets: [0, 3],
-                        className: 'text-center'
-                    },
-                    {
-                        targets: [2, 4, 8, 9, 10, 11, 12],
-                        className: 'text-center',
-                        searchable: false
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    zeroRecords: "No se encontraron resultados",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
                     }
-                ]
+                },
+                columnDefs: [
+                    {
+                        targets: 1, // Ajusta este índice según la posición real de tu columna de meses
+                        type: 'month-ordering', // Tipo personalizado que crearemos
+                        render: function(data, type, row) {
+                            if (type === 'sort' || type === 'type') {
+                                return mesesOrden[data] || 0; // Para ordenar usamos el número
+                            }
+                            return data; // Para mostrar usamos el texto original
+                        }
+                    }
+                ],
+                initComplete: function() {
+                    $('.dataTables_filter input').addClass('form-control form-control-sm');
+                    $('.dataTables_length select').addClass('form-select form-select-sm');
+                }
             });
+
+            // Registramos el tipo de ordenación personalizado
+            $.fn.dataTable.ext.type.order['month-ordering-pre'] = function(data) {
+                return mesesOrden[data] || 0;
+            };
         });
     </script>
 </body>

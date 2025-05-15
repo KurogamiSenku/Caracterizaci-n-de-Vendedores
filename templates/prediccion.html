@@ -11,7 +11,7 @@
     <nav class="navbar">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="static/images/ESCUDO-COLOR-H.png" alt="">
+                <img src="{{ url_for('static', filename='images/ESCUDO-COLOR-H.png') }}" alt="">
                 <span class="ms-2">Proyecto Vendedores Chía</span>
             </a>
             <ul class="navbar-nav">
@@ -27,31 +27,23 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/graficas">Gráficas</a>
                 </li>
-                 <li class="nav-item">
-                        <a class="nav-link" href="/referencias">Referencias</a>
-                    </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/referencias">Referencias</a>
+                </li>
             </ul>
         </div>
     </nav>
 
-    <main class="container">
-        <section id="prediction-section" class="section-wrapper">
-            <div class="container">
-                <div class="section-title text-center mb-5">
-                    <h2>Predicción del Perfil del Vendedor</h2>
-                    <p>
-                        Ingrese las características del vendedor para predecir su perfil.
-                    </p>
-                </div>
-                <form id="prediction-form" class="form-wrapper">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="mes-radicacion">Mes de Radicación:</label>
-                                <input type="number" id="mes-radicacion" name="mes-radicacion" class="form-control" required placeholder="Ej: 1, 2, 12">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+    <main class="container mt-4">
+        <section id="prediction-section">
+            <div class="section-title text-center mb-4">
+                <h1>Predicción del Perfil del Vendedor</h1>
+                <p class="lead">Ingrese las características del vendedor para predecir su nivel de vulnerabilidad</p>
+            </div>
+            
+            <form id="prediction-form" method="POST" action="/prediccion" class="mt-4">
+                <div class="row">
+                    <div class="col-md-6">
                             <div class="form-group">
                                 <label for="genero">Género:</label>
                                 <select id="genero" name="genero" class="form-control" required>
@@ -157,20 +149,62 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Predecir Perfil</button>
-                </form>
-                <div id="prediction-results" class="mt-4" style="display: none;">
-                    <h3>Resultados de la Predicción:</h3>
-                    <div id="resultado-exitoso" style="display: none;">
-                        <p><strong>Perfil Predicho:</strong> <span id="perfil-predicho"></span></p>
-                        <p><strong>Descripción:</strong> <span id="descripcion-perfil"></span></p>
-                    </div>
-                    <div id="resultado-fallido" style="display: none;">
-                        <p>No se pudo predecir el perfil. Por favor, revise los datos ingresados.</p>
-                    </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Predecir Vulnerabilidad</button>
+                </div>
+            </form>
+            {% if show_results %}
+            <div id="prediction-results">
+                <div class="result-card">
+                    {% if error %}
+                        <div class="alert alert-danger">
+                            <h4>Error</h4>
+                            <p>{{ error }}</p>
+                        </div>
+                    {% else %}
+                        <h3>Nivel de Vulnerabilidad Predicho:</h3>
+                        {% if prediccion == "Alto" %}
+                            <p class="vulnerability-high">{{ prediccion }}</p>
+                        {% elif prediccion == "Medio" %}
+                            <p class="vulnerability-medium">{{ prediccion }}</p>
+                        {% else %}
+                            <p class="vulnerability-low">{{ prediccion }}</p>
+                        {% endif %}
+
+                        <h4>Probabilidades:</h4>
+                        {% for nivel, prob in probabilidades.items() %}
+                            <p>{{ nivel }}: {{ prob }}%</p>
+                            <div class="probability-bar">
+                                <div class="probability-fill" style="--prob: {{ prob }}%;"></div>
+                            </div>
+                        {% endfor %}
+
+                        <h4>Recomendaciones:</h4>
+                        {% if prediccion == "Alto" %}
+                            <ul>
+                                <li>Prioridad alta para programas de apoyo social</li>
+                                <li>Recomendado para subsidios especiales</li>
+                                <li>Necesita acompañamiento continuo</li>
+                            </ul>
+                        {% elif prediccion == "Medio" %}
+                            <ul>
+                                <li>Beneficiario de programas de capacitación</li>
+                                <li>Elegible para microcréditos</li>
+                                <li>Seguimiento semestral recomendado</li>
+                            </ul>
+                        {% else %}
+                            <ul>
+                                <li>Potencial para programas de formalización</li>
+                                <li>Elegible para capacitaciones avanzadas</li>
+                                <li>Seguimiento anual suficiente</li>
+                            </ul>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
-        </section>        
+            {% endif %}                   
+        </section>
     </main>
 
     <footer class="bg-light text-center py-4 mt-5">
@@ -181,34 +215,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('prediction-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const formData = new FormData(this);
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
+        // Animación para las barras de probabilidad
+        document.addEventListener('DOMContentLoaded', function() {
+            const fills = document.querySelectorAll('.probability-fill');
+            fills.forEach(fill => {
+                const targetWidth = fill.style.width;
+                fill.style.width = '0%';
+                setTimeout(() => {
+                    fill.style.width = targetWidth;
+                }, 100);
             });
-
-            // Aquí se simula una respuesta del servidor.  En un proyecto real, enviarías esto a tu servidor Django.
-            setTimeout(() => {
-                const resultadoExitoso = document.getElementById('resultado-exitoso');
-                const resultadoFallido = document.getElementById('resultado-fallido');
-                const predictionResults = document.getElementById('prediction-results');
-
-
-                // Simula una predicción exitosa el 80% de las veces.
-                if (Math.random() < 0.8) {
-                    resultadoExitoso.textContent = `Condición Predicha: Estable.  Probabilidad de formalización: 65%.`;
-                    resultadoExitoso.style.display = 'block';
-                    resultadoFallido.style.display = 'none';
-                } else {
-                    resultadoFallido.textContent = 'Condición Predicha: Inestable.  Se recomienda buscar apoyo.';
-                    resultadoFallido.style.display = 'block';
-                    resultadoExitoso.style.display = 'none';
-                }
-                predictionResults.style.display = 'block';
-            }, 1500); // Simula un retraso de 1.5 segundos para obtener la respuesta.
         });
     </script>
 </body>
