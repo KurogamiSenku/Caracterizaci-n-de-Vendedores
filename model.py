@@ -16,6 +16,8 @@ from sklearn.metrics import (
     roc_auc_score
 )
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import classification_report
+import textwrap
 import matplotlib.pyplot as plt
 import pickle
 import os
@@ -101,6 +103,18 @@ class VendedoresModel:
             print("Error en entrenamiento, validación o evaluación:", str(e))
             traceback.print_exc()
             return False
+    
+    def generar_reporte_modelo(self, y_true, y_pred, output_dir='static/images'):
+        #Genera un gráfico con el texto del reporte del modelo
+        report = classification_report(y_true, y_pred)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.axis('off')
+        wrapped_text = "\n".join(textwrap.wrap(report, width=80))
+        ax.text(0.01, 0.99, wrapped_text, fontsize=10, va='top', family='monospace')
+        plt.tight_layout()
+        plt.savefig(f'{output_dir}/reporte_modelo.png')
+        plt.close()
 
     def validar_modelo_cruzada(self, X, y, cv=5):  # cv: número de folds
         """Realiza la validación cruzada k-fold y muestra los resultados."""
@@ -117,10 +131,11 @@ class VendedoresModel:
         """Ajusta los hiperparámetros del modelo usando GridSearchCV."""
 
         param_grid = {
-            'C': [0.001, 0.01, 0.1, 1, 10, 100],  # Fuerza de la regularización
-            'penalty': ['l1', 'l2'],  # Tipo de regularización
-            'solver': ['liblinear']  # Aseguramos 'liblinear' para l1
+            'C': [0.1, 1, 10],  # Valores más razonables
+            'penalty': ['l2'],  # L2 no anula completamente los coeficientes
+            'solver': ['liblinear']
         }
+
         grid_search = GridSearchCV(
             LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42),
             param_grid, cv=5, scoring='f1_weighted'  # Usamos F1-weighted
@@ -155,6 +170,9 @@ class VendedoresModel:
         if len(np.unique(self.y_test)) == 2:
             y_prob = self.model.predict_proba(self.X_test)[:, 1]
             print(f"\nAUC-ROC: {roc_auc_score(self.y_test, y_prob):.4f}")
+        
+        self.generar_reporte_modelo(self.y_test, y_pred)
+
 
     def generar_matriz_confusion(self, y_true, y_pred, output_dir='static/images'):
         # (Código para generar matriz de confusión - SIN CAMBIOS)
@@ -242,10 +260,10 @@ class VendedoresModel:
             }, f)
 
     def generar_graficas_analiticas(self, output_dir='static/images'):
-        # (Código para generar gráficas - SIN CAMBIOS)
         try:
             os.makedirs(output_dir, exist_ok=True)
 
+            # Distribución de vulnerabilidad
             plt.figure(figsize=(10, 6))
             self.df['NIVEL_VULNERABILIDAD'].value_counts().sort_index().plot(
                 kind='bar', color=['#4CAF50', '#FFC107', '#F44336'])
@@ -257,33 +275,94 @@ class VendedoresModel:
             plt.savefig(f'{output_dir}/distribucion_vulnerabilidad.png')
             plt.close()
 
+            # Importancia de características
             if self.model is not None:
-                plt.figure(figsize=(10, 6))
+                coef_mean = np.mean(np.abs(self.model.coef_), axis=0)
                 coefficients = pd.DataFrame({
                     'Feature': self.X_train.columns,
-                    'Importance': self.model.coef_[0]  # Acceder a los coeficientes
-                }).sort_values('Importance', key=abs, ascending=False)
+                    'Importance': coef_mean
+                }).sort_values('Importance', ascending=False)
 
+                coefficients = coefficients[coefficients['Importance'] > 0.0001]
+
+                plt.figure(figsize=(12, 6), dpi=120)
                 coefficients.plot(kind='bar', x='Feature', y='Importance', legend=False)
                 plt.title('Importancia de Características en el Modelo')
                 plt.xlabel('Características')
                 plt.ylabel('Importancia (coeficientes)')
+                plt.xticks(rotation=45, ha='right')
                 plt.tight_layout()
                 plt.savefig(f'{output_dir}/importancia_caracteristicas.png')
                 plt.close()
 
+            # Distribución por género (con etiquetas reales)
+            genero_labels = self.label_encoders['GENERO'].inverse_transform(
+                self.df['GENERO'].value_counts().index
+            )
             plt.figure(figsize=(8, 6))
-            self.df['GENERO'].value_counts().plot(kind='pie', autopct='%1.1f%%')
+            self.df['GENERO'].value_counts().plot(
+                kind='pie', labels=genero_labels, autopct='%1.1f%%')
             plt.title('Distribución por Género')
             plt.ylabel('')
             plt.tight_layout()
             plt.savefig(f'{output_dir}/distribucion_genero.png')
             plt.close()
 
+            # Histograma de edades
+            plt.figure(figsize=(10, 6))
+            edades_originales = self.scaler.inverse_transform(self.df[['EDAD']])
+            plt.hist(edades_originales, bins=10, color='skyblue', edgecolor='black')
+            plt.title('Distribución de Edad')
+            plt.xlabel('Edad')
+            plt.ylabel('Número de Vendedores')
+            plt.gca().yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/distribucion_edad.png')
+            plt.close()
+
+            # Participación en asociaciones
+            plt.figure(figsize=(6, 6))
+            self.df['PERTENECE A ALGUNA ASOCIACIÓN'].value_counts().plot(
+                kind='bar', color=['#1f77b4', '#ff7f0e'])
+            plt.title('Participación en Asociaciones')
+            plt.xlabel('¿Pertenece a una Asociación?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/asociacion.png')
+            plt.close()
+
+            # Identidad LGBTIQ+
+            plt.figure(figsize=(6, 6))
+            self.df['IDENTIFICADO LGBTIQ+'].value_counts().plot(
+                kind='bar', color=['#e377c2', '#7f7f7f'])
+            plt.title('Identificación LGBTIQ+')
+            plt.xlabel('¿Identificado LGBTIQ+?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/lgbtiq.png')
+            plt.close()
+
+            # Discapacidad
+            plt.figure(figsize=(6, 6))
+            self.df['PERSONA EN DISCAPACIDAD'].value_counts().plot(
+                kind='bar', color=['#17becf', '#bcbd22'])
+            plt.title('Personas con Discapacidad')
+            plt.xlabel('¿Tiene Discapacidad?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/discapacidad.png')
+            plt.close()
+
             return True
+
         except Exception as e:
             print(f"Error generando gráficas analíticas: {str(e)}")
             return False
+
 
     def graficas_disponibles(self):
         base_path = 'static/images'
@@ -292,8 +371,14 @@ class VendedoresModel:
             'matriz_confusion': os.path.exists(f'{base_path}/matriz_confusion.png'),
             'distribucion_vulnerabilidad': os.path.exists(f'{base_path}/distribucion_vulnerabilidad.png'),
             'importancia_caracteristicas': os.path.exists(f'{base_path}/importancia_caracteristicas.png'),
-            'distribucion_genero': os.path.exists(f'{base_path}/distribucion_genero.png')
+            'distribucion_genero': os.path.exists(f'{base_path}/distribucion_genero.png'),
+            'distribucion_edad': os.path.exists(f'{base_path}/distribucion_edad.png'),
+            'asociacion': os.path.exists(f'{base_path}/asociacion.png'),
+            'lgbtiq': os.path.exists(f'{base_path}/lgbtiq.png'),
+            'discapacidad': os.path.exists(f'{base_path}/discapacidad.png'),
+            'reporte_modelo': os.path.exists(f'{base_path}/reporte_modelo.png'),
         }
+
 
     @staticmethod
     def cargar_modelo(ruta='modelos/modelo_vendedores.pkl'):

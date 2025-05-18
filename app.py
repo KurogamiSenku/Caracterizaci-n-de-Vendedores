@@ -131,45 +131,14 @@ def prediccion():
 @app.route('/graficas')
 def mostrar_graficas():
     try:
-        # Inicializar modelo si no está cargado
-        global modelo
-        if modelo is None:
-            modelo = VendedoresModel()
-            if not modelo.cargar_datos():
-                raise Exception("No se pudieron cargar los datos")
-            modelo.preprocesar_datos()
-
-            # Entrenar modelo si no está entrenado
-            if not hasattr(modelo, 'model') or modelo.model is None:
-                features = [
-                    'GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
-                    'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
-                    'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+'
-                ]
-                entrenado = modelo.entrenar_evaluar_modelo(features)
-                if not entrenado:
-                    raise Exception("No se pudo entrenar el modelo")
-
-            # Generar las gráficas siempre después de entrenamiento
-            modelo.generar_graficas_analiticas()
-
-
-
-        # Generar gráficas si no existen
-        if not any(modelo.graficas_disponibles().values()):
-            modelo.generar_matriz_confusion(modelo.y_test, modelo.model.predict(modelo.X_test))
-            modelo.generar_graficas_analiticas()
-
-        return render_template('graficas.html',
-                            graficas=modelo.graficas_disponibles(),
-                            titulo="Análisis Gráfico Completo")
-
+        modelo = VendedoresModel()
+        modelo.cargar_datos()
+        modelo.preprocesar_datos()
+        modelo.entrenar_evaluar_modelo([...])  # Tus features aquí
+        modelo.generar_graficas_analiticas()
+        return render_template('graficas.html', graficas=modelo.graficas_disponibles())
     except Exception as e:
-        error_msg = f"Error al generar gráficas: {str(e)}"
-        app.logger.error(error_msg)
-        return render_template('error.html',
-                            error_message="No se pudieron mostrar las gráficas",
-                            error_details=error_msg if app.debug else None), 500
+        return render_template('graficas.html', error=str(e), graficas={})
 
 
 @app.route('/referencias')
