@@ -47,51 +47,64 @@
         {% endif %}
 
         <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Distribución por Género</h3>
-                        <div class="chart-container">
-                            <img src="{{ url_for('static', filename='images/genero_chart.png') }}" alt="Distribución por Género" class="img-fluid">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Distribución por Edad</h3>
-                        <div class="chart-container">
-                            <img src="{{ url_for('static', filename='images/edad_chart.png') }}" alt="Distribución por Edad" class="img-fluid">
-                        </div>
+        {% if graficas.distribucion_vulnerabilidad %}
+        <div class="col-md-12">
+            <div class="card mb-12">
+                <div class="card-body">
+                    <h3 class="card-title">Distribución de Niveles de Vulnerabilidad</h3>
+                    <div class="chart-container">
+                        <img src="{{ url_for('static', filename='images/distribucion_vulnerabilidad.png') }}" 
+                            alt="Distribución de Vulnerabilidad" class="img-fluid">
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
+        
+        {% if graficas.importancia_caracteristicas %}
+        <div class="col-md-12">
+            <div class="card mb-12">
+                <div class="card-body">
+                    <h3 class="card-title">Importancia de Características</h3>
+                    <div class="chart-container">
+                        <img src="{{ url_for('static', filename='images/importancia_caracteristicas.png') }}" 
+                            alt="Importancia de Características" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Productos más Vendidos</h3>
-                        <div class="chart-container">
-                            <img src="{{ url_for('static', filename='images/productos_chart.png') }}" alt="Productos más Vendidos" class="img-fluid">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Vulnerabilidad por Grupo</h3>
-                        <div class="chart-container">
-                            <img src="{{ url_for('static', filename='images/vulnerabilidad_chart.png') }}" alt="Vulnerabilidad por Grupo" class="img-fluid">
-                        </div>
+    <div class="row">
+        {% if graficas.distribucion_genero %}
+        <div class="col-md-12">
+            <div class="card mb-12">
+                <div class="card-body">
+                    <h3 class="card-title">Distribución por Género</h3>
+                    <div class="chart-container">
+                        <img src="{{ url_for('static', filename='images/distribucion_genero.png') }}" 
+                            alt="Distribución por Género" class="img-fluid">
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+        {% endif %}
+        
+        {% if graficas.matriz_confusion %}
+        <div class="col-md-12">
+            <div class="card mb-12">
+                <div class="card-body">
+                    <h3 class="card-title">Matriz de Confusión</h3>
+                    <div class="chart-container">
+                        <img src="{{ url_for('static', filename='images/matriz_confusion.png') }}" 
+                            alt="Matriz de Confusión" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
     <footer class="bg-light text-center py-4 mt-5">
         <p class="text-muted">

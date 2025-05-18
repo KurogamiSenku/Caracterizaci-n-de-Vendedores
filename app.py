@@ -94,37 +94,38 @@ def datos():
 
 @app.route('/prediccion', methods=['GET', 'POST'])
 def prediccion():
+    global modelo  # Usar la variable global 'modelo'
+
     if request.method == 'POST':
-        # Procesar formulario de predicción
-        datos = {
-            'GENERO': request.form.get('genero'),
-            'EDAD': int(request.form.get('edad')),
-            'ADULTO MAYOR': request.form.get('adulto-mayor'),
-            'PERSONA EN DISCAPACIDAD': request.form.get('discapacidad'),
-            'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO': request.form.get('victima-conflicto'),
-            'CERTIFICADO RESGUARDO INDÍGENA': request.form.get('resguardo-indigena'),
-            'IDENTIFICADO LGBTIQ+': request.form.get('identificado-lgbtiq'),
-            'PERTENECE A ALGUNA ASOCIACIÓN': request.form.get('pertenece-asociacion'),
-            'PRODUCTO QUE VENDE': request.form.get('producto-venta')
-        }
-        
-        if modelo:
-            try:
-                resultado = modelo.predecir(datos, list(modelo.X_train.columns))
-                return render_template('prediccion.html', 
-                                    prediccion=resultado['prediccion'],
-                                    probabilidades=resultado['probabilidades'],
-                                    show_results=True)
-            except Exception as e:
-                return render_template('prediccion.html', 
-                                    error=f"Error en predicción: {str(e)}",
-                                    show_results=True)
-        else:
-            return render_template('prediccion.html', 
-                                error="Modelo no disponible",
-                                show_results=True)
-    
-    return render_template('prediccion.html', show_results=False)
+        try:
+            # Recoger los datos del formulario
+            form_data = request.form.to_dict()
+
+            # Convertir los datos a un DataFrame
+            pred_df = pd.DataFrame([form_data])
+
+            # Preprocesar los datos (igual que en entrenamiento)
+            for col in pred_df.columns:
+                if col in modelo.label_encoders:
+                    pred_df[col] = pred_df[col].astype(str)  # Asegurar que es string antes de transformar
+                    pred_df[col] = modelo.label_encoders[col].transform(pred_df[col])
+                pred_df[col] = pd.to_numeric(pred_df[col], errors='coerce')  # Convertir a numérico
+
+            # Escalar los datos
+            pred_scaled = modelo.scaler.transform(pred_df)
+
+            # Realizar la predicción
+            prediccion = modelo.model.predict(pred_scaled)
+            prediccion_texto = modelo.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform(prediccion)
+
+            return render_template('prediccion.html', prediccion=prediccion_texto[0])
+
+        except Exception as e:
+            error_msg = f"Error al realizar la predicción: {str(e)}"
+            app.logger.error(error_msg)
+            return render_template('error.html', error_message="Error en la predicción", error_details=error_msg if app.debug else None), 500
+
+    return render_template('prediccion.html', prediccion=None)
 
 
 @app.route('/graficas')
@@ -137,32 +138,38 @@ def mostrar_graficas():
             if not modelo.cargar_datos():
                 raise Exception("No se pudieron cargar los datos")
             modelo.preprocesar_datos()
-            
+
             # Entrenar modelo si no está entrenado
-            if not hasattr(modelo, 'model'):
+            if not hasattr(modelo, 'model') or modelo.model is None:
                 features = [
                     'GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
                     'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
                     'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+'
                 ]
-                modelo.entrenar_evaluar_modelo(features)
-        
+                entrenado = modelo.entrenar_evaluar_modelo(features)
+                if not entrenado:
+                    raise Exception("No se pudo entrenar el modelo")
+
+            # Generar las gráficas siempre después de entrenamiento
+            modelo.generar_graficas_analiticas()
+
+
+
         # Generar gráficas si no existen
         if not any(modelo.graficas_disponibles().values()):
             modelo.generar_matriz_confusion(modelo.y_test, modelo.model.predict(modelo.X_test))
             modelo.generar_graficas_analiticas()
-        
+
         return render_template('graficas.html',
                             graficas=modelo.graficas_disponibles(),
                             titulo="Análisis Gráfico Completo")
-    
+
     except Exception as e:
         error_msg = f"Error al generar gráficas: {str(e)}"
         app.logger.error(error_msg)
         return render_template('error.html',
                             error_message="No se pudieron mostrar las gráficas",
                             error_details=error_msg if app.debug else None), 500
-
 
 
 @app.route('/referencias')
