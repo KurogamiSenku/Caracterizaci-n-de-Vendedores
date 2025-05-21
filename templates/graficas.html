@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficas - Caracterización de Vendedores Informales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <span class="ms-2">Proyecto Vendedores Chía</span>
+            </a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/datos">Datos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/prediccion">Predicción</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/graficas">Gráficas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/referencias">Referencias</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+    <div class="jumbotron">
+        <h1>Visualización de Datos</h1>
+        <p>Explora las gráficas generadas a partir del análisis de los vendedores informales en Chía.</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger mb-4">
+        <h4>Error</h4>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% if graficas.distribucion_vulnerabilidad %}
+        <div class="col-md-12 mb-12">
+            <h3>Distribución de Niveles de Vulnerabilidad</h3>
+            <img src="{{ url_for('static', filename='images/distribucion_vulnerabilidad.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Muestra cuántos vendedores se encuentran en niveles bajo, medio o alto de vulnerabilidad según su perfil.</p>
+        </div>
+        {% endif %}
+
+        {% if graficas.importancia_caracteristicas %}
+        <div class="col-md-12 mb-12">
+            <h3>Importancia de Características</h3>
+            <img src="{{ url_for('static', filename='images/importancia_caracteristicas.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Representa qué variables influyen más en el modelo de predicción del nivel de vulnerabilidad.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if graficas.distribucion_genero %}
+        <div class="col-md-12 mb-12">
+            <h3>Distribución por Género</h3>
+            <img src="{{ url_for('static', filename='images/distribucion_genero.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Visualiza la proporción de hombres y mujeres entre los vendedores informales.</p>
+        </div>
+        {% endif %}
+
+        {% if graficas.distribucion_edad %}
+        <div class="col-md-12 mb-12">
+            <h3>Distribución de Edad</h3>
+            <img src="{{ url_for('static', filename='images/distribucion_edad.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Muestra la distribución de edades de los vendedores, útil para identificar rangos etarios predominantes.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if graficas.asociacion %}
+        <div class="col-md-6 mb-4">
+            <h3>Participación en Asociaciones</h3>
+            <img src="{{ url_for('static', filename='images/asociacion.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Indica qué porcentaje de vendedores pertenece a alguna asociación organizada.</p>
+        </div>
+        {% endif %}
+
+        {% if graficas.lgbtiq %}
+        <div class="col-md-6 mb-4">
+            <h3>Identificación LGBTIQ+</h3>
+            <img src="{{ url_for('static', filename='images/lgbtiq.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Permite conocer cuántos vendedores se identifican como parte de la comunidad LGBTIQ+.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if graficas.discapacidad %}
+        <div class="col-md-12 mb-12">
+            <h3>Personas con Discapacidad</h3>
+            <img src="{{ url_for('static', filename='images/discapacidad.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Muestra cuántos vendedores presentan alguna condición de discapacidad.</p>
+        </div>
+        {% endif %}
+
+        {% if graficas.matriz_confusion %}
+        <div class="col-md-12 mb-12">
+            <h3>Matriz de Confusión</h3>
+            <img src="{{ url_for('static', filename='images/matriz_confusion.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Visualiza el desempeño del modelo, mostrando cuántas predicciones fueron correctas o incorrectas por clase.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if graficas.reporte_modelo %}
+        <div class="col-md-12 mb-5">
+            <h3>Informe del Modelo (Classification Report)</h3>
+            <img src="{{ url_for('static', filename='images/reporte_modelo.png') }}" class="img-fluid">
+            <p class="text-muted mt-2">Muestra las métricas clave del modelo: precisión, sensibilidad (recall) y f1-score para cada clase.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-light text-center py-4 mt-5">
+        <p class="text-muted">Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.</p>
+    </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

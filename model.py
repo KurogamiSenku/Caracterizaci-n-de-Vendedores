@@ -1,57 +1,428 @@
-import numpy as np
+import traceback
 import pandas as pd
-
-import matplotlib
-matplotlib.use('Agg')  # <-- Soluciona el error de GUI
+import numpy as np
+from sklearn.model_selection import (
+    train_test_split,
+    cross_val_score,  # Para validación cruzada
+    GridSearchCV     # Para ajuste de hiperparámetros
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    confusion_matrix,
+    classification_report,
+    roc_auc_score
+)
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import classification_report
+import textwrap
 import matplotlib.pyplot as plt
+import pickle
+import os
 
-import io
-import base64
-from sklearn.linear_model import LinearRegression
+class VendedoresModel:
+    def __init__(self):
+        self.model = None
+        self.scaler = StandardScaler()
+        self.label_encoders = {}
+        self.X_train = None  # Guardamos X_train
+        self.X_test = None
+        self.y_test = None
 
-data = {
-    "Study Hours": [10, 15, 12, 8, 14, 5, 16, 7, 11, 13, 9, 4, 18, 3, 17, 6, 14, 2, 20, 1],
-    "Final Grade": [3.8, 4.2, 3.6, 3, 4.5, 2.5, 4.8, 2.8, 3.7, 4, 3.2, 2.2, 5, 1.8, 4.9, 2.7, 4.4, 1.5, 5, 1]
-}
+    def cargar_datos(self, file_path='./data/CARACTERIZACION_DE_VENDEDORES_INFORMALES_DEL_MUNICIPIO_DE_CHIA.csv'):
+        # (Código de carga y limpieza de datos - SIN CAMBIOS)
+        try:
+            self.df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8')
+            # Limpiar nombres de columnas: mayúsculas y sin espacios
+            self.df.columns = [col.upper().strip() for col in self.df.columns]
+            self.df['GENERO'] = self.df['GENERO'].str.capitalize().replace({
+                'M': 'Masculino', 'F': 'Femenino', 'O': 'Otro'
+            })
 
-df = pd.DataFrame(data)
-x= df[["Study Hours"]]
-y = df[["Final Grade"]]
+            # Imprimir para verificar
+            print("Columnas procesadas:", self.df.columns.tolist())
 
-model = LinearRegression()
-model.fit(x,y)
+            binary_cols = ['ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
+                           'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+                           'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+                           'PERTENECE A ALGUNA ASOCIACIÓN']
 
-#generar grafico con matplop e imagen 
-def generate_plot(hours=None):
-    fig, ax = plt.subplots()
+            for col in binary_cols:
+                self.df[col] = self.df[col].astype(str).str.upper().str.strip().replace(
+                    {'SI': 1, 'SÍ': 1, 'YES': 1, 'TRUE': 1, '1': 1}).replace(
+                    {'NO': 0, 'FALSE': 0, '0': 0}).fillna(0).astype(int)
 
-    # Dibujar puntos reales y la línea de regresión
-    ax.scatter(df["Study Hours"], df["Final Grade"], color="blue", label="Datos Reales")
-    ax.plot(df["Study Hours"], model.predict(x), color="red", label="Línea de Regresión")
+            self.df['MIGRANTE_VENEZOLANO'] = self.df['NACIONALIDAD'].apply(
+                lambda x: 1 if x == 'VENEZOLANO' else 0)
+            self.df['PUNTUACION_VULNERABILIDAD'] = (
+                self.df[binary_cols].sum(axis=1) + self.df['MIGRANTE_VENEZOLANO'])
+            self.df['NIVEL_VULNERABILIDAD'] = pd.cut(self.df['PUNTUACION_VULNERABILIDAD'],
+                                                     bins=[-1, 1, 3, 6],
+                                                     labels=['Bajo', 'Medio', 'Alto'])
+            return True
 
-    # Si el usuario ingresó horas, agregar el punto de predicción
-    if hours is not None:
-        predicted_grade = calculateGrade(hours)
-        ax.scatter(hours, predicted_grade, color="green", marker="o", s=100, label="Predicción Usuario")
+        except Exception as e:
+            print(f"Error en cargar_datos(): {str(e)}")
+            traceback.print_exc()
+            return False
 
-    ax.set_xlabel("Horas de Estudio")
-    ax.set_ylabel("Calificación Final")
-    ax.set_title("Regresión Lineal: Horas de Estudio vs Calificación")
-    ax.legend()
+    def preprocesar_datos(self, target='NIVEL_VULNERABILIDAD'):
+        # (Código de preprocesamiento - SIN CAMBIOS SIGNIFICATIVOS)
+        for col in ['GENERO', 'PRODUCTO QUE VENDE']:
+            self.label_encoders[col] = LabelEncoder()
+            self.df[col] = self.label_encoders[col].fit_transform(self.df[col].astype(str))
 
-    # Guardar imagen en memoria
-    img = io.BytesIO()
-    plt.savefig(img, format="png")
-    img.seek(0)
-    plt.close(fig)
+        if target in self.df.columns:
+            self.label_encoders[target] = LabelEncoder()
+            self.df[target] = self.label_encoders[target].fit_transform(self.df[target])
 
-    # Convertir imagen a base64
-    encoded_img = base64.b64encode(img.getvalue()).decode("utf-8")
-    return encoded_img
+        if 'EDAD' in self.df.columns:
+            self.df['EDAD'] = self.scaler.fit_transform(self.df[['EDAD']])
 
-def calculateGrade(hours):
-    result = model.predict([[hours]])
-    grade = float(result[0][0])  # asegurarse de tener un float
-    grade = min(max(grade, 0.0), 5.0)  # limitar entre 0 y 5
-    return round(grade, 2)  # devolver número redondeado
+    def entrenar_evaluar_modelo(self, features, target='NIVEL_VULNERABILIDAD'):
+        try:
+            X = self.df[features]
+            y = self.df[target]
+
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+                X, y, test_size=0.3, random_state=42, stratify=y)
+            
+            # Validación Cruzada (k-fold)
+            self.validar_modelo_cruzada(X, y)
+
+            # Ajuste de Hiperparámetros
+            self.ajustar_hiperparametros(X, y)
+
+            # Re-entrenamiento con los mejores parámetros
+            self.reentrenar_modelo(X, y)
+
+            # Evaluación final
+            self.evaluar_modelo()
+
+            return True
+
+        except Exception as e:
+            print("Error en entrenamiento, validación o evaluación:", str(e))
+            traceback.print_exc()
+            return False
     
+    def generar_reporte_modelo(self, y_true, y_pred, output_dir='static/images'):
+        #Genera un gráfico con el texto del reporte del modelo
+        report = classification_report(y_true, y_pred)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.axis('off')
+        wrapped_text = "\n".join(textwrap.wrap(report, width=80))
+        ax.text(0.01, 0.99, wrapped_text, fontsize=10, va='top', family='monospace')
+        plt.tight_layout()
+        plt.savefig(f'{output_dir}/reporte_modelo.png')
+        plt.close()
+
+    def validar_modelo_cruzada(self, X, y, cv=5):  # cv: número de folds
+        """Realiza la validación cruzada k-fold y muestra los resultados."""
+
+        modelo = LogisticRegression(class_weight='balanced', solver='liblinear',
+                                    max_iter=1000, random_state=42)
+        scores = cross_val_score(modelo, X, y, cv=cv, scoring='f1_weighted')  # Usamos F1-weighted
+        print(f"\n=== Validación Cruzada ({cv}-fold) ===")
+        print(f"F1-Score Promedio: {np.mean(scores):.4f}")
+        print(f"Desviación Estándar: {np.std(scores):.4f}")
+        # Puedes guardar los scores si necesitas un análisis más profundo
+
+    def ajustar_hiperparametros(self, X, y):
+        """Ajusta los hiperparámetros del modelo usando GridSearchCV."""
+
+        param_grid = {
+            'C': [0.1, 1, 10],  # Valores más razonables
+            'penalty': ['l2'],  # L2 no anula completamente los coeficientes
+            'solver': ['liblinear']
+        }
+
+        grid_search = GridSearchCV(
+            LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42),
+            param_grid, cv=5, scoring='f1_weighted'  # Usamos F1-weighted
+        )
+        grid_search.fit(X, y)
+
+        print("\n=== Mejor Hiperparámetros ===")
+        print("Mejores parámetros:", grid_search.best_params_)
+        self.best_params_ = grid_search.best_params_  # Guardamos los mejores parámetros
+        self.model = grid_search.best_estimator_  # Guardamos el mejor modelo
+
+    def reentrenar_modelo(self, X, y):
+        """Re-entrena el modelo con los mejores hiperparámetros."""
+
+        self.model.fit(X, y)  # Re-entrenar con TODO el conjunto
+
+    def evaluar_modelo(self):
+        """Evalúa el modelo en el conjunto de prueba."""
+
+        y_pred = self.model.predict(self.X_test)
+
+        print("\n=== Evaluación Final (Conjunto de Prueba) ===")
+        print(f"Accuracy: {accuracy_score(self.y_test, y_pred):.4f}")
+        print(f"Precision: {precision_score(self.y_test, y_pred, average='weighted'):.4f}")
+        print(f"Recall: {recall_score(self.y_test, y_pred, average='weighted'):.4f}")
+
+        print("\nClassification Report:")
+        print(classification_report(self.y_test, y_pred))
+
+        self.generar_matriz_confusion(self.y_test, y_pred)
+
+        if len(np.unique(self.y_test)) == 2:
+            y_prob = self.model.predict_proba(self.X_test)[:, 1]
+            print(f"\nAUC-ROC: {roc_auc_score(self.y_test, y_prob):.4f}")
+        
+        self.generar_reporte_modelo(self.y_test, y_pred)
+
+
+    def generar_matriz_confusion(self, y_true, y_pred, output_dir='static/images'):
+        # (Código para generar matriz de confusión - SIN CAMBIOS)
+        os.makedirs(output_dir, exist_ok=True)
+        cm = confusion_matrix(y_true, y_pred)
+        classes = self.label_encoders['NIVEL_VULNERABILIDAD'].classes_ if 'NIVEL_VULNERABILIDAD' in self.label_encoders else np.unique(y_true)
+
+        plt.figure(figsize=(8, 6))
+        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.title('Matriz de Confusión')
+        plt.colorbar()
+
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes, rotation=45)
+        plt.yticks(tick_marks, classes)
+
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                plt.text(j, i, format(cm[i, j], 'd'),
+                        horizontalalignment="center",
+                        color="white" if cm[i, j] > thresh else "black")
+
+        plt.ylabel('Etiqueta Real')
+        plt.xlabel('Etiqueta Predicha')
+        plt.tight_layout()
+        plt.savefig(f'{output_dir}/matriz_confusion.png')
+        plt.close()
+        print("\nMatriz de confusión generada en:", f'{output_dir}/matriz_confusion.png')
+
+    def predecir(self, datos, features):
+        try:
+            datos_procesados = pd.DataFrame([datos])
+
+            for col in features:
+                valor = datos[col]
+
+                if col in self.label_encoders:
+                    encoder = self.label_encoders[col]
+                    if valor not in encoder.classes_:
+                        print(f"Valor desconocido para la columna {col}: '{valor}'")
+                        raise ValueError(f"Valor desconocido para la columna {col}: '{valor}'")
+                    datos_procesados[col] = encoder.transform([valor])[0]
+
+                elif col in ['ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
+                            'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+                            'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+                            'PERTENECE A ALGUNA ASOCIACIÓN']:
+                    datos_procesados[col] = 1 if valor.strip().upper() in ['SI', 'SÍ', 'YES', 'TRUE', '1'] else 0
+
+                elif col == 'MIGRANTE_VENEZOLANO':
+                    datos_procesados[col] = 1 if valor.strip().upper() == 'VENEZOLANO' else 0
+
+                elif col == 'EDAD':
+                    datos_procesados[col] = self.scaler.transform(
+                        pd.DataFrame([[valor]], columns=['EDAD'])
+                    )[0][0]
+
+            prediccion = self.model.predict(datos_procesados[features])[0]
+            probabilidad = self.model.predict_proba(datos_procesados[features])[0]
+
+            if 'NIVEL_VULNERABILIDAD' in self.label_encoders:
+                prediccion = self.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform([prediccion])[0]
+
+            return prediccion, {
+                cls: round(prob * 100, 2)
+                for cls, prob in zip(self.label_encoders['NIVEL_VULNERABILIDAD'].classes_, probabilidad)
+            }
+
+        except Exception as e:
+            print("Error en predicción:", str(e))
+            raise ValueError(f"Error en predicción: {str(e)}")
+
+
+
+    def get_recommendations(self, nivel_vulnerabilidad):
+        # (Código para recomendaciones - SIN CAMBIOS)
+        recomendaciones = {
+            'Alto': ["Prioridad alta para programas de apoyo social",
+                     "Recomendado para subsidios especiales",
+                     "Necesita acompañamiento continuo",
+                     "Acceso prioritario a servicios de salud"],
+            'Medio': ["Beneficiario de programas de capacitación",
+                      "Elegible para microcréditos",
+                      "Seguimiento semestral recomendado",
+                      "Acceso a talleres de emprendimiento"],
+            'Bajo': ["Potencial para programas de formalización",
+                     "Elegible para capacitaciones avanzadas",
+                     "Seguimiento anual suficiente",
+                     "Acceso a programas de expansión comercial"]}
+        return recomendaciones.get(nivel_vulnerabilidad, [])
+
+    def obtener_opciones_validas(self, columna):
+        """Devuelve una lista de valores únicos o clases reconocidas por el codificador."""
+        if columna in self.label_encoders:
+            return list(self.label_encoders[columna].classes_)
+        elif columna in self.df.columns:
+            return sorted(self.df[columna].dropna().unique().tolist())
+        else:
+            return []
+
+    def guardar_modelo(self, ruta='modelos/'):
+        # (Código para guardar modelo - SIN CAMBIOS)
+        os.makedirs(ruta, exist_ok=True)
+        with open(f'{ruta}modelo_vendedores.pkl', 'wb') as f:
+            pickle.dump({
+                'model': self.model,
+                'scaler': self.scaler,
+                'label_encoders': self.label_encoders,
+                'features': list(self.X_train.columns) if self.X_train is not None else []
+            }, f)
+
+    def generar_graficas_analiticas(self, output_dir='static/images'):
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Distribución de vulnerabilidad
+            plt.figure(figsize=(10, 6))
+            self.df['NIVEL_VULNERABILIDAD'].value_counts().sort_index().plot(
+                kind='bar', color=['#4CAF50', '#FFC107', '#F44336'])
+            plt.title('Distribución de Niveles de Vulnerabilidad')
+            plt.xlabel('Nivel de Vulnerabilidad')
+            plt.ylabel('Cantidad de Vendedores')
+            plt.xticks(rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/distribucion_vulnerabilidad.png')
+            plt.close()
+
+            # Importancia de características
+            if self.model is not None:
+                coef_mean = np.mean(np.abs(self.model.coef_), axis=0)
+                coefficients = pd.DataFrame({
+                    'Feature': self.X_train.columns,
+                    'Importance': coef_mean
+                }).sort_values('Importance', ascending=False)
+
+                coefficients = coefficients[coefficients['Importance'] > 0.0001]
+
+                plt.figure(figsize=(12, 6), dpi=120)
+                coefficients.plot(kind='bar', x='Feature', y='Importance', legend=False)
+                plt.title('Importancia de Características en el Modelo')
+                plt.xlabel('Características')
+                plt.ylabel('Importancia (coeficientes)')
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                plt.savefig(f'{output_dir}/importancia_caracteristicas.png')
+                plt.close()
+
+            # Distribución por género (con etiquetas reales)
+            genero_labels = self.label_encoders['GENERO'].inverse_transform(
+                self.df['GENERO'].value_counts().index
+            )
+            plt.figure(figsize=(8, 6))
+            self.df['GENERO'].value_counts().plot(
+                kind='pie', labels=genero_labels, autopct='%1.1f%%')
+            plt.title('Distribución por Género')
+            plt.ylabel('')
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/distribucion_genero.png')
+            plt.close()
+
+            # Histograma de edades
+            plt.figure(figsize=(10, 6))
+            edades_originales = self.scaler.inverse_transform(self.df[['EDAD']])
+            plt.hist(edades_originales, bins=10, color='skyblue', edgecolor='black')
+            plt.title('Distribución de Edad')
+            plt.xlabel('Edad')
+            plt.ylabel('Número de Vendedores')
+            plt.gca().yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/distribucion_edad.png')
+            plt.close()
+
+            # Participación en asociaciones
+            plt.figure(figsize=(6, 6))
+            self.df['PERTENECE A ALGUNA ASOCIACIÓN'].value_counts().plot(
+                kind='bar', color=['#1f77b4', '#ff7f0e'])
+            plt.title('Participación en Asociaciones')
+            plt.xlabel('¿Pertenece a una Asociación?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/asociacion.png')
+            plt.close()
+
+            # Identidad LGBTIQ+
+            plt.figure(figsize=(6, 6))
+            self.df['IDENTIFICADO LGBTIQ+'].value_counts().plot(
+                kind='bar', color=['#e377c2', '#7f7f7f'])
+            plt.title('Identificación LGBTIQ+')
+            plt.xlabel('¿Identificado LGBTIQ+?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/lgbtiq.png')
+            plt.close()
+
+            # Discapacidad
+            plt.figure(figsize=(6, 6))
+            self.df['PERSONA EN DISCAPACIDAD'].value_counts().plot(
+                kind='bar', color=['#17becf', '#bcbd22'])
+            plt.title('Personas con Discapacidad')
+            plt.xlabel('¿Tiene Discapacidad?')
+            plt.ylabel('Cantidad')
+            plt.xticks(ticks=[0, 1], labels=['No', 'Sí'], rotation=0)
+            plt.tight_layout()
+            plt.savefig(f'{output_dir}/discapacidad.png')
+            plt.close()
+
+            return True
+
+        except Exception as e:
+            print(f"Error generando gráficas analíticas: {str(e)}")
+            return False
+
+
+    def graficas_disponibles(self):
+        base_path = 'static/images'
+        print(f"Base path en graficas_disponibles: {base_path}") 
+        return {
+            'matriz_confusion': os.path.exists(f'{base_path}/matriz_confusion.png'),
+            'distribucion_vulnerabilidad': os.path.exists(f'{base_path}/distribucion_vulnerabilidad.png'),
+            'importancia_caracteristicas': os.path.exists(f'{base_path}/importancia_caracteristicas.png'),
+            'distribucion_genero': os.path.exists(f'{base_path}/distribucion_genero.png'),
+            'distribucion_edad': os.path.exists(f'{base_path}/distribucion_edad.png'),
+            'asociacion': os.path.exists(f'{base_path}/asociacion.png'),
+            'lgbtiq': os.path.exists(f'{base_path}/lgbtiq.png'),
+            'discapacidad': os.path.exists(f'{base_path}/discapacidad.png'),
+            'reporte_modelo': os.path.exists(f'{base_path}/reporte_modelo.png'),
+        }
+
+
+    @staticmethod
+    def cargar_modelo(ruta='modelos/modelo_vendedores.pkl'):
+        # (Código para cargar modelo - SIN CAMBIOS)
+        try:
+            with open(ruta, 'rb') as f:
+                datos = pickle.load(f)
+
+            modelo = VendedoresModel()
+            modelo.model = datos['model']
+            modelo.scaler = datos['scaler']
+            modelo.label_encoders = datos['label_encoders']
+
+            return modelo
+        except Exception as e:
+            print("Error cargando modelo:", str(e))
+            return None
