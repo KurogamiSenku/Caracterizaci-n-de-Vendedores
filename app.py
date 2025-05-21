@@ -17,7 +17,17 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/images'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-modelo = None
+modelo = VendedoresModel()
+modelo.cargar_datos()
+modelo.preprocesar_datos()
+features = ['GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
+            'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+            'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+            'PERTENECE A ALGUNA ASOCIACIÓN', 'PRODUCTO QUE VENDE', 'MIGRANTE_VENEZOLANO']
+
+modelo.entrenar_evaluar_modelo(features)
+
+
 
 @app.route('/')
 def home():
@@ -94,39 +104,71 @@ def datos():
 
 @app.route('/prediccion', methods=['GET', 'POST'])
 def prediccion():
-    global modelo  # Usar la variable global 'modelo'
-
     if request.method == 'POST':
         try:
-            # Recoger los datos del formulario
-            form_data = request.form.to_dict()
+            datos_usuario = {
+                'GENERO': request.form['GENERO'],
+                'EDAD': int(request.form['EDAD']),
+                'ADULTO MAYOR': request.form['ADULTO_MAYOR'],
+                'NACIONALIDAD': request.form['NACIONALIDAD'],
+                'PRODUCTO QUE VENDE': request.form['PRODUCTO QUE VENDE'],
+                'DETALLE DEL PRODUCTO': request.form['DETALLE DEL PRODUCTO'],
+                'PERSONA EN DISCAPACIDAD': request.form['PERSONA EN DISCAPACIDAD'],
+                'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO': request.form['CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO'],
+                'CERTIFICADO RESGUARDO INDÍGENA': request.form['CERTIFICADO RESGUARDO INDÍGENA'],
+                'IDENTIFICADO LGBTIQ+': request.form['IDENTIFICADO LGBTIQ+'],
+                'PERTENECE A ALGUNA ASOCIACIÓN': request.form['PERTENECE A ALGUNA ASOCIACIÓN'],
+                'MIGRANTE_VENEZOLANO': 1 if 'VENEZOLANO' in request.form['NACIONALIDAD'].strip().upper() else 0
+            }
 
-            # Convertir los datos a un DataFrame
-            pred_df = pd.DataFrame([form_data])
+            features = modelo.X_train.columns.tolist() if modelo.X_train is not None else [
+                'GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
+                'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+                'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+                'PERTENECE A ALGUNA ASOCIACIÓN', 'PRODUCTO QUE VENDE', 'MIGRANTE_VENEZOLANO'
+            ]
+            print("Datos recibidos del formulario:")
+            print(datos_usuario)
 
-            # Preprocesar los datos (igual que en entrenamiento)
-            for col in pred_df.columns:
-                if col in modelo.label_encoders:
-                    pred_df[col] = pred_df[col].astype(str)  # Asegurar que es string antes de transformar
-                    pred_df[col] = modelo.label_encoders[col].transform(pred_df[col])
-                pred_df[col] = pd.to_numeric(pred_df[col], errors='coerce')  # Convertir a numérico
+            resultado = modelo.predecir(datos_usuario, features=features)
+            if resultado is None:
+                raise ValueError("La predicción falló. Verifica los valores ingresados.")
 
-            # Escalar los datos
-            pred_scaled = modelo.scaler.transform(pred_df)
+            prediccion, probabilidades = resultado
 
-            # Realizar la predicción
-            prediccion = modelo.model.predict(pred_scaled)
-            prediccion_texto = modelo.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform(prediccion)
 
-            return render_template('prediccion.html', prediccion=prediccion_texto[0])
+            datos_usuario['NIVEL_VULNERABILIDAD'] = prediccion
+            modelo.df = pd.concat([modelo.df, pd.DataFrame([datos_usuario])], ignore_index=True)
+            modelo.df.to_csv('./data/CARACTERIZACION_DE_VENDEDORES_INFORMALES_DEL_MUNICIPIO_DE_CHIA.csv', index=False)
+
+            return render_template('prediccion.html',
+                                   show_results=True,
+                                   prediccion=prediccion,
+                                   probabilidades=probabilidades,
+                                   error=None,
+                                   opciones_producto=modelo.obtener_opciones_validas('PRODUCTO QUE VENDE'),
+                                   opciones_genero=modelo.obtener_opciones_validas('GENERO'))
 
         except Exception as e:
-            error_msg = f"Error al realizar la predicción: {str(e)}"
-            app.logger.error(error_msg)
-            return render_template('error.html', error_message="Error en la predicción", error_details=error_msg if app.debug else None), 500
+            print("Error al realizar la predicción:", str(e))
+            return render_template('prediccion.html',
+                                   show_results=True,
+                                   prediccion=None,
+                                   probabilidades=None,
+                                   error=str(e),
+                                   opciones_producto=modelo.obtener_opciones_validas('PRODUCTO QUE VENDE'),
+                                   opciones_genero=modelo.obtener_opciones_validas('GENERO'))
 
-    return render_template('prediccion.html', prediccion=None)
+    else:
+        opciones_genero = modelo.obtener_opciones_validas('GENERO')
+        opciones_producto = modelo.obtener_opciones_validas('PRODUCTO QUE VENDE')
+        opciones_nacionalidad = modelo.obtener_opciones_validas('NACIONALIDAD')
 
+        return render_template('prediccion.html',
+                               show_results=False,
+                               opciones_genero=opciones_genero,
+                               opciones_producto=opciones_producto,
+                               opciones_nacionalidad=opciones_nacionalidad)
 
 @app.route('/graficas')
 def mostrar_graficas():
@@ -134,7 +176,7 @@ def mostrar_graficas():
         modelo = VendedoresModel()
         modelo.cargar_datos()
         modelo.preprocesar_datos()
-        modelo.entrenar_evaluar_modelo([...])  # Tus features aquí
+        modelo.entrenar_evaluar_modelo([...])  
         modelo.generar_graficas_analiticas()
         return render_template('graficas.html', graficas=modelo.graficas_disponibles())
     except Exception as e:

@@ -37,6 +37,10 @@ class VendedoresModel:
             self.df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8')
             # Limpiar nombres de columnas: mayúsculas y sin espacios
             self.df.columns = [col.upper().strip() for col in self.df.columns]
+            self.df['GENERO'] = self.df['GENERO'].str.capitalize().replace({
+                'M': 'Masculino', 'F': 'Femenino', 'O': 'Otro'
+            })
+
             # Imprimir para verificar
             print("Columnas procesadas:", self.df.columns.tolist())
 
@@ -66,7 +70,7 @@ class VendedoresModel:
 
     def preprocesar_datos(self, target='NIVEL_VULNERABILIDAD'):
         # (Código de preprocesamiento - SIN CAMBIOS SIGNIFICATIVOS)
-        for col in ['GENERO', 'PRODUCTO QUE VENDE', 'PERTENECE A ALGUNA ASOCIACIÓN']:
+        for col in ['GENERO', 'PRODUCTO QUE VENDE']:
             self.label_encoders[col] = LabelEncoder()
             self.df[col] = self.label_encoders[col].fit_transform(self.df[col].astype(str))
 
@@ -204,19 +208,32 @@ class VendedoresModel:
         print("\nMatriz de confusión generada en:", f'{output_dir}/matriz_confusion.png')
 
     def predecir(self, datos, features):
-        # (Código para predecir - SIN CAMBIOS)
         try:
             datos_procesados = pd.DataFrame([datos])
 
             for col in features:
+                valor = datos[col]
+
                 if col in self.label_encoders:
-                    datos_procesados[col] = self.label_encoders[col].transform([str(datos[col])])
+                    encoder = self.label_encoders[col]
+                    if valor not in encoder.classes_:
+                        print(f"Valor desconocido para la columna {col}: '{valor}'")
+                        raise ValueError(f"Valor desconocido para la columna {col}: '{valor}'")
+                    datos_procesados[col] = encoder.transform([valor])[0]
+
                 elif col in ['ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
-                           'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
-                           'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+']:
-                    datos_procesados[col] = 1 if datos[col] == 'Sí' else 0
+                            'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+                            'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+                            'PERTENECE A ALGUNA ASOCIACIÓN']:
+                    datos_procesados[col] = 1 if valor.strip().upper() in ['SI', 'SÍ', 'YES', 'TRUE', '1'] else 0
+
+                elif col == 'MIGRANTE_VENEZOLANO':
+                    datos_procesados[col] = 1 if valor.strip().upper() == 'VENEZOLANO' else 0
+
                 elif col == 'EDAD':
-                    datos_procesados[col] = self.scaler.transform([[datos['EDAD']]])[0][0]
+                    datos_procesados[col] = self.scaler.transform(
+                        pd.DataFrame([[valor]], columns=['EDAD'])
+                    )[0][0]
 
             prediccion = self.model.predict(datos_procesados[features])[0]
             probabilidad = self.model.predict_proba(datos_procesados[features])[0]
@@ -224,12 +241,16 @@ class VendedoresModel:
             if 'NIVEL_VULNERABILIDAD' in self.label_encoders:
                 prediccion = self.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform([prediccion])[0]
 
-            return {'prediccion': prediccion,
-                    'probabilidades': {cls: round(prob * 100, 2) for cls, prob in
-                                     zip(self.model.classes_, probabilidad)}}
+            return prediccion, {
+                cls: round(prob * 100, 2)
+                for cls, prob in zip(self.label_encoders['NIVEL_VULNERABILIDAD'].classes_, probabilidad)
+            }
+
         except Exception as e:
             print("Error en predicción:", str(e))
-            return None
+            raise ValueError(f"Error en predicción: {str(e)}")
+
+
 
     def get_recommendations(self, nivel_vulnerabilidad):
         # (Código para recomendaciones - SIN CAMBIOS)
@@ -247,6 +268,15 @@ class VendedoresModel:
                      "Seguimiento anual suficiente",
                      "Acceso a programas de expansión comercial"]}
         return recomendaciones.get(nivel_vulnerabilidad, [])
+
+    def obtener_opciones_validas(self, columna):
+        """Devuelve una lista de valores únicos o clases reconocidas por el codificador."""
+        if columna in self.label_encoders:
+            return list(self.label_encoders[columna].classes_)
+        elif columna in self.df.columns:
+            return sorted(self.df[columna].dropna().unique().tolist())
+        else:
+            return []
 
     def guardar_modelo(self, ruta='modelos/'):
         # (Código para guardar modelo - SIN CAMBIOS)
