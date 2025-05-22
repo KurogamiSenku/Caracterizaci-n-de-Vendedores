@@ -32,37 +32,59 @@ class VendedoresModel:
         self.y_test = None
 
     def cargar_datos(self, file_path='./data/CARACTERIZACION_DE_VENDEDORES_INFORMALES_DEL_MUNICIPIO_DE_CHIA.csv'):
-        # (Código de carga y limpieza de datos - SIN CAMBIOS)
+        # (Código de carga y limpieza de datos)
         try:
-            self.df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8')
-            # Limpiar nombres de columnas: mayúsculas y sin espacios
-            self.df.columns = [col.upper().strip() for col in self.df.columns]
-            self.df['GENERO'] = self.df['GENERO'].str.capitalize().replace({
-                'M': 'Masculino', 'F': 'Femenino', 'O': 'Otro'
-            })
+            self.df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8-sig')        
+            # Limpieza de género
+            gender_mapping = {
+                'F': 'Femenino', 'FEMENINO': 'Femenino', 'FEMALE': 'Femenino',
+                'M': 'Masculino', 'MASCULINO': 'Masculino', 'MALE': 'Masculino',
+                'O': 'Otro', 'OTRO': 'Otro', 'OTHER': 'Otro'
+            }
+            
+            self.df['GENERO'] = self.df['GENERO'].astype(str).str.strip().str.upper()
+            self.df['GENERO'] = self.df['GENERO'].map(gender_mapping).fillna('Otro')
+                
+            # Estandarizar productos
+            self.df['PRODUCTO QUE VENDE'] = self.df['PRODUCTO QUE VENDE'].apply(
+                lambda x: str(x).strip().upper()
+            )
 
             # Imprimir para verificar
             print("Columnas procesadas:", self.df.columns.tolist())
 
-            binary_cols = ['ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
-                           'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
-                           'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
-                           'PERTENECE A ALGUNA ASOCIACIÓN']
+            binary_cols = {
+                'ADULTO MAYOR': 2,  
+                'PERSONA EN DISCAPACIDAD': 2,  
+                'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO': 3,  
+                'CERTIFICADO RESGUARDO INDÍGENA': 2,  
+                'IDENTIFICADO LGBTIQ+': 1,
+                'PERTENECE A ALGUNA ASOCIACIÓN': -1  
+            }
 
-            for col in binary_cols:
+            # Calcular puntuación con nuevos pesos
+            self.df['PUNTUACION_VULNERABILIDAD'] = 0
+            for col, peso in binary_cols.items():
                 self.df[col] = self.df[col].astype(str).str.upper().str.strip().replace(
                     {'SI': 1, 'SÍ': 1, 'YES': 1, 'TRUE': 1, '1': 1}).replace(
                     {'NO': 0, 'FALSE': 0, '0': 0}).fillna(0).astype(int)
+                self.df['PUNTUACION_VULNERABILIDAD'] += self.df[col] * peso
 
+            # Añadir puntuación por migrante venezolano
             self.df['MIGRANTE_VENEZOLANO'] = self.df['NACIONALIDAD'].apply(
-                lambda x: 1 if x == 'VENEZOLANO' else 0)
-            self.df['PUNTUACION_VULNERABILIDAD'] = (
-                self.df[binary_cols].sum(axis=1) + self.df['MIGRANTE_VENEZOLANO'])
-            self.df['NIVEL_VULNERABILIDAD'] = pd.cut(self.df['PUNTUACION_VULNERABILIDAD'],
-                                                     bins=[-1, 1, 3, 6],
-                                                     labels=['Bajo', 'Medio', 'Alto'])
-            return True
+                lambda x: 2 if str(x).upper() == 'VENEZOLANO' else 0)  # Peso aumentado
+            
+            self.df['PUNTUACION_VULNERABILIDAD'] += self.df['MIGRANTE_VENEZOLANO']
 
+            # Nuevos rangos de vulnerabilidad
+            self.df['NIVEL_VULNERABILIDAD'] = pd.cut(
+                self.df['PUNTUACION_VULNERABILIDAD'],
+                bins=[-1, 3, 7, 20],  # Rangos ajustados
+                labels=['Bajo', 'Medio', 'Alto']
+            )
+            
+            return True
+    
         except Exception as e:
             print(f"Error en cargar_datos(): {str(e)}")
             traceback.print_exc()
@@ -132,24 +154,35 @@ class VendedoresModel:
         # Puedes guardar los scores si necesitas un análisis más profundo
 
     def ajustar_hiperparametros(self, X, y):
-        """Ajusta los hiperparámetros del modelo usando GridSearchCV."""
+        """Ajusta los hiperparámetros del modelo usando GridSearchCV, con más peso a la clase 'Alto'."""
+
+        # Obtener las clases originales
+        clases_decodificadas = self.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform(np.unique(y))
+
+        # Asignar pesos personalizados
+        pesos = {clase: 1 for clase in clases_decodificadas}
+        pesos['Alto'] = 3  # Puedes subirlo más si aún predice poco "Alto"
+
+        print("Pesos aplicados a las clases:", pesos)
 
         param_grid = {
-            'C': [0.1, 1, 10],  # Valores más razonables
-            'penalty': ['l2'],  # L2 no anula completamente los coeficientes
+            'C': [0.1, 1, 10],
+            'penalty': ['l2'],
             'solver': ['liblinear']
         }
 
         grid_search = GridSearchCV(
-            LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42),
-            param_grid, cv=5, scoring='f1_weighted'  # Usamos F1-weighted
+            LogisticRegression(class_weight=pesos, max_iter=1000, random_state=42),
+            param_grid, cv=5, scoring='f1_weighted'
         )
+
         grid_search.fit(X, y)
 
         print("\n=== Mejor Hiperparámetros ===")
         print("Mejores parámetros:", grid_search.best_params_)
-        self.best_params_ = grid_search.best_params_  # Guardamos los mejores parámetros
-        self.model = grid_search.best_estimator_  # Guardamos el mejor modelo
+        self.best_params_ = grid_search.best_params_
+        self.model = grid_search.best_estimator_
+
 
     def reentrenar_modelo(self, X, y):
         """Re-entrena el modelo con los mejores hiperparámetros."""
@@ -209,8 +242,9 @@ class VendedoresModel:
 
     def predecir(self, datos, features):
         try:
-            datos_procesados = pd.DataFrame([datos])
-
+            # Procesamiento para predicción
+            datos_procesados = pd.DataFrame([datos]).copy()
+            
             for col in features:
                 valor = datos[col]
 
@@ -228,19 +262,21 @@ class VendedoresModel:
                     datos_procesados[col] = 1 if valor.strip().upper() in ['SI', 'SÍ', 'YES', 'TRUE', '1'] else 0
 
                 elif col == 'MIGRANTE_VENEZOLANO':
-                    datos_procesados[col] = 1 if valor.strip().upper() == 'VENEZOLANO' else 0
+                    datos_procesados[col] = int(valor)
 
                 elif col == 'EDAD':
                     datos_procesados[col] = self.scaler.transform(
                         pd.DataFrame([[valor]], columns=['EDAD'])
                     )[0][0]
 
+            # Realizar predicción
             prediccion = self.model.predict(datos_procesados[features])[0]
             probabilidad = self.model.predict_proba(datos_procesados[features])[0]
 
             if 'NIVEL_VULNERABILIDAD' in self.label_encoders:
                 prediccion = self.label_encoders['NIVEL_VULNERABILIDAD'].inverse_transform([prediccion])[0]
 
+            
             return prediccion, {
                 cls: round(prob * 100, 2)
                 for cls, prob in zip(self.label_encoders['NIVEL_VULNERABILIDAD'].classes_, probabilidad)
@@ -248,35 +284,99 @@ class VendedoresModel:
 
         except Exception as e:
             print("Error en predicción:", str(e))
+            traceback.print_exc()
             raise ValueError(f"Error en predicción: {str(e)}")
 
-
-
+    
     def get_recommendations(self, nivel_vulnerabilidad):
-        # (Código para recomendaciones - SIN CAMBIOS)
+        # (Código para recomendaciones)
         recomendaciones = {
             'Alto': ["Prioridad alta para programas de apoyo social",
-                     "Recomendado para subsidios especiales",
-                     "Necesita acompañamiento continuo",
-                     "Acceso prioritario a servicios de salud"],
+                    "Recomendado para subsidios especiales",
+                    "Necesita acompañamiento continuo",
+                    "Acceso prioritario a servicios de salud"],
             'Medio': ["Beneficiario de programas de capacitación",
-                      "Elegible para microcréditos",
-                      "Seguimiento semestral recomendado",
-                      "Acceso a talleres de emprendimiento"],
+                    "Elegible para microcréditos",
+                    "Seguimiento semestral recomendado",
+                    "Acceso a talleres de emprendimiento"],
             'Bajo': ["Potencial para programas de formalización",
-                     "Elegible para capacitaciones avanzadas",
-                     "Seguimiento anual suficiente",
-                     "Acceso a programas de expansión comercial"]}
+                    "Elegible para capacitaciones avanzadas",
+                    "Seguimiento anual suficiente",
+                    "Acceso a programas de expansión comercial"]}
         return recomendaciones.get(nivel_vulnerabilidad, [])
 
     def obtener_opciones_validas(self, columna):
-        """Devuelve una lista de valores únicos o clases reconocidas por el codificador."""
         if columna in self.label_encoders:
-            return list(self.label_encoders[columna].classes_)
+            # Obtener todas las clases del encoder
+            clases = self.label_encoders[columna].classes_.tolist()
+            
+            # Para género: manejar casos especiales
+            if columna == 'GENERO':
+                # Mapeo de valores conocidos
+                mapeo_genero = {
+                    'F': 'Femenino',
+                    'M': 'Masculino',
+                    'O': 'Otro',
+                    'Femenino': 'Femenino',
+                    'Masculino': 'Masculino',
+                    'Otro': 'Otro'
+                }
+                return sorted({mapeo_genero.get(str(x).strip().capitalize(), 'Otro') for x in clases if str(x).strip()})
+            
+            # Para producto: mantener todos los valores no vacíos
+            elif columna == 'PRODUCTO QUE VENDE':
+                try:
+                    # Obtener los valores originales del DataFrame antes de la codificación
+                    if hasattr(self, 'df_original'):
+                        productos = self.df_original['PRODUCTO QUE VENDE'].dropna().unique()
+                    else:
+                        # Si no tenemos el df original, intentar decodificar los valores numéricos
+                        productos = self.label_encoders[columna].inverse_transform(
+                            self.df['PRODUCTO QUE VENDE'].dropna().unique()
+                        )
+                    
+                    # Filtrar y limpiar los valores
+                    opciones = []
+                    for p in productos:
+                        p_str = str(p).strip()
+                        if p_str and not p_str.replace('.','',1).isdigit() and len(p_str) > 1:
+                            opciones.append(p_str.upper())
+                    
+                    return sorted(list(set(opciones))) if opciones else ['Alimentos', 'Ropa', 'Artesanías', 'Accesorios', 'Otros']
+                
+                except Exception as e:
+                    print(f"Error obteniendo opciones de producto: {str(e)}")
+                    return ['Alimentos', 'Ropa', 'Artesanías', 'Accesorios', 'Otros']
+            
+            # Para otras columnas
+            return sorted({str(x).strip() for x in clases if str(x).strip()})
+        
         elif columna in self.df.columns:
-            return sorted(self.df[columna].dropna().unique().tolist())
-        else:
-            return []
+            # Obtener valores únicos directamente del DataFrame
+            valores = self.df[columna].dropna().unique()
+            
+            # Manejo especial por columna
+            if columna == 'GENERO':
+                mapeo_genero = {
+                    'F': 'Femenino',
+                    'M': 'Masculino',
+                    'O': 'Otro',
+                    'Femenino': 'Femenino',
+                    'Masculino': 'Masculino',
+                    'Otro': 'Otro'
+                }
+                return sorted({mapeo_genero.get(str(x).strip().capitalize(), 'Otro') for x in valores})
+            
+            elif columna == 'PRODUCTO QUE VENDE':
+                return sorted({str(x).strip().upper() for x in valores})
+            
+            elif columna == 'NACIONALIDAD':
+                return sorted({str(x).strip().upper() for x in valores})
+            
+            return sorted({str(x).strip() for x in valores})
+        
+        return []
+
 
     def guardar_modelo(self, ruta='modelos/'):
         # (Código para guardar modelo - SIN CAMBIOS)

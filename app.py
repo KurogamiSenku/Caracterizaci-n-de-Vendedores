@@ -27,6 +27,12 @@ features = ['GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
 
 modelo.entrenar_evaluar_modelo(features)
 
+if modelo.model is None:
+    print("❌ ERROR: El modelo no se entrenó correctamente.")
+else:
+    print("✅ Modelo entrenado correctamente y listo para hacer predicciones.")
+
+
 
 
 @app.route('/')
@@ -72,6 +78,28 @@ def datos():
                                error="No se pudo leer el archivo CSV con ningún encoding/separador conocido",
                                datos=[])
 
+        # Decodificar columnas que fueron codificadas
+        if hasattr(modelo, 'label_encoders'):
+            for col in modelo.label_encoders:
+                if col in df.columns:
+                    try:
+                        # Verificar si los valores son numéricos
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            # Decodificar usando el label_encoder
+                            df[col] = modelo.label_encoders[col].inverse_transform(df[col].astype(int))
+                    except Exception as e:
+                        print(f"Error decodificando columna {col}: {str(e)}")
+                        continue
+
+        # Decodificar edad (si fue escalada)
+        if 'EDAD' in df.columns and hasattr(modelo, 'scaler'):
+            try:
+                # Asumimos que la edad fue escalada
+                df['EDAD'] = modelo.scaler.inverse_transform(df[['EDAD']])
+                df['EDAD'] = df['EDAD'].round().astype(int)
+            except Exception as e:
+                print(f"Error decodificando edad: {str(e)}")
+
         # Limpieza básica de datos
         df = df.fillna('')
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -104,6 +132,35 @@ def datos():
 
 @app.route('/prediccion', methods=['GET', 'POST'])
 def prediccion():
+    # Añadir depuración para verificar los datos
+    print("\n=== DEBUG: VERIFICACIÓN DE DATOS ===")
+    if hasattr(modelo, 'df') and modelo.df is not None:
+        print("Total de registros en el DataFrame:", len(modelo.df))
+        print("Columnas disponibles:", modelo.df.columns.tolist())
+        if 'PRODUCTO QUE VENDE' in modelo.df.columns:
+            print("Valores únicos en PRODUCTO QUE VENDE:", modelo.df['PRODUCTO QUE VENDE'].unique())
+        else:
+            print("La columna 'PRODUCTO QUE VENDE' no existe en el DataFrame")
+    else:
+        print("El DataFrame no está disponible o está vacío")
+    print("===============================\n")
+    
+    opciones_genero = modelo.obtener_opciones_validas('GENERO')
+    opciones_producto = modelo.obtener_opciones_validas('PRODUCTO QUE VENDE')
+    
+    # Si las opciones de producto están vacías, proporcionar valores predeterminados
+    if not opciones_producto:
+        print("ADVERTENCIA: No se encontraron opciones de producto, usando valores predeterminados")
+        opciones_producto = ['Alimentos', 'Ropa', 'Artesanías', 'Accesorios', 'Otros']
+    
+    opciones_nacionalidad = modelo.obtener_opciones_validas('NACIONALIDAD')
+    # Debug: Verificar las opciones que se enviarán al template
+    print("\n=== DEBUG: OPCIONES DEL FORMULARIO ===")
+    print("Opciones género:", opciones_genero)
+    print("Opciones producto:", opciones_producto)
+    print("Opciones nacionalidad:", opciones_nacionalidad)
+    print("===============================\n")
+    
     if request.method == 'POST':
         try:
             datos_usuario = {
@@ -138,8 +195,19 @@ def prediccion():
 
 
             datos_usuario['NIVEL_VULNERABILIDAD'] = prediccion
-            modelo.df = pd.concat([modelo.df, pd.DataFrame([datos_usuario])], ignore_index=True)
-            modelo.df.to_csv('./data/CARACTERIZACION_DE_VENDEDORES_INFORMALES_DEL_MUNICIPIO_DE_CHIA.csv', index=False)
+            # Guardar predicción en archivo separado sin alterar el dataset original
+            campos_csv = ['GENERO', 'EDAD', 'ADULTO MAYOR', 'PERSONA EN DISCAPACIDAD',
+                        'CERTIFICADO REGISTRO ÚNICO DE VÍCTIMAS CONFLICTO ARMADO',
+                        'CERTIFICADO RESGUARDO INDÍGENA', 'IDENTIFICADO LGBTIQ+',
+                        'PERTENECE A ALGUNA ASOCIACIÓN', 'PRODUCTO QUE VENDE',
+                        'NACIONALIDAD', 'DETALLE DEL PRODUCTO', 'MIGRANTE_VENEZOLANO', 'NIVEL_VULNERABILIDAD']
+
+            df_pred = pd.DataFrame([{k: datos_usuario[k] for k in campos_csv}])
+
+            # Guardamos la predicción en un CSV alternativo para análisis posterior
+            df_pred.to_csv('./data/predicciones_realizadas.csv',
+                        mode='a', index=False,
+                        header=not os.path.exists('./data/predicciones_realizadas.csv'))
 
             return render_template('prediccion.html',
                                    show_results=True,
@@ -147,17 +215,20 @@ def prediccion():
                                    probabilidades=probabilidades,
                                    error=None,
                                    opciones_producto=modelo.obtener_opciones_validas('PRODUCTO QUE VENDE'),
-                                   opciones_genero=modelo.obtener_opciones_validas('GENERO'))
+                                   opciones_genero=modelo.obtener_opciones_validas('GENERO'),
+                                   opciones_nacionalidad = modelo.obtener_opciones_validas('NACIONALIDAD'))
 
         except Exception as e:
             print("Error al realizar la predicción:", str(e))
             return render_template('prediccion.html',
-                                   show_results=True,
-                                   prediccion=None,
-                                   probabilidades=None,
-                                   error=str(e),
-                                   opciones_producto=modelo.obtener_opciones_validas('PRODUCTO QUE VENDE'),
-                                   opciones_genero=modelo.obtener_opciones_validas('GENERO'))
+                                show_results=True,
+                                prediccion=None,
+                                probabilidades=None,
+                                error=str(e),
+                                opciones_producto=modelo.obtener_opciones_validas('PRODUCTO QUE VENDE'),
+                                opciones_genero=modelo.obtener_opciones_validas('GENERO'),
+                                opciones_nacionalidad=modelo.obtener_opciones_validas('NACIONALIDAD')) 
+
 
     else:
         opciones_genero = modelo.obtener_opciones_validas('GENERO')
