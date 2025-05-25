@@ -6,50 +6,89 @@
     <title>Referencias - Vendedores Informales Chía</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="static/images/ESCUDO-COLOR-H.png" alt="Logo Universidad de Cundinamarca">
-                <span class="ms-2">Proyecto Vendedores Chía</span>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container d-block">
+            <a class="navbar-brand d-flex align-items-center mb-2" href="/">
+                <img src="static/images/ESCUDO-COLOR-H.png" alt="Logo Universidad de Cundinamarca" style="height: 40px;">
+                <span class="ms-2 fs-4 fw-bold">Proyecto Vendedores Chía</span>
             </a>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Inicio</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/datos">Datos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/prediccion">Predicción</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/graficas">Gráficas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/referencias">Referencias</a>
-                </li>
-            </ul>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/datos">Ingenieria de Datos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prediccion">Predicción</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/graficas">Gráficas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/referencias">Referencias</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <main class="container">
+    <main class="container my-5">
         <section class="section-title text-center mb-5">
-            <h2>Referencias</h2>
+            <h2>Fuentes y Referencias del Proyecto</h2>
+            <p class="lead">
+                La solidez de cualquier investigación radica en sus fuentes. A continuación,
+                se detallan los recursos bibliográficos y de datos que fundamentan este trabajo.
+            </p>
         </section>
 
-        <section>
-            <p>
-                A continuación, se presenta la lista de referencias utilizadas para el desarrollo de este proyecto.
-            </p>
-            <ol>
-                <li>
-                    CARACTERIZACIÓN DE VENDEDORES INFORMALES DEL MUNICIPIO DE CHÍA - 2024 | Datos abiertos Colombia. (2024, November 8). https://www.datos.gov.co/Trabajo/CARACTERIZACI-N-DE-VENDEDORES-INFORMALES-DEL-MUNIC/shkj-g5ku/data_preview
-                </li>
-                 
-            </ol>
-        </section>
+        <div class="card shadow-lg mb-5 border-0">
+            <div class="card-header bg-success text-white py-3">
+                <h4 class="mb-0 text-center">
+                    <i class="fas fa-book-open me-2"></i> Fuentes Primarias y Bibliografía
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <p class="card-text text-muted mb-4">
+                    Explora las publicaciones y conjuntos de datos clave que sirvieron como pilares para este estudio.
+                </p>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex align-items-start py-3">
+                        <i class="fas fa-database fa-2x text-info me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                CARACTERIZACIÓN DE VENDEDORES INFORMALES DEL MUNICIPIO DE CHÍA - 2024
+                            </h5>
+                            <p class="mb-1">
+                                <span class="fw-semibold">Fuente:</span> Datos Abiertos Colombia
+                            </p>
+                            <p class="mb-1">
+                                <span class="fw-semibold">Fecha de Consulta:</span> 8 de Noviembre de 2024 (o la fecha de tu última consulta)
+                            </p>
+                            <a href="https://www.datos.gov.co/Trabajo/CARACTERIZACI-N-DE-VENDEDORES-INFORMALES-DEL-MUNIC/shkj-g5ku/data_preview" target="_blank" class="text-decoration-none">
+                                <i class="fas fa-external-link-alt me-1"></i> Acceder al Conjunto de Datos
+                            </a>
+                            <p class="mt-2 text-small text-muted">
+                                Este es el dataset principal utilizado para la caracterización y el entrenamiento
+                                del modelo predictivo. Contiene información sociodemográfica y económica de los
+                                vendedores informales en Chía, esencial para comprender sus perfiles de vulnerabilidad.
+                            </p>
+                        </div>
+                    </li>
+                    </ul>
+            </div>
+            <div class="card-footer bg-light text-center py-3">
+                <p class="text-muted mb-0">
+                    "La información es la moneda de cambio de la democracia." - Thomas Jefferson
+                </p>
+            </div>
+        </div>
     </main>
 
     <footer class="bg-light text-center py-4 mt-5">
@@ -57,5 +96,7 @@
             Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.
         </p>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
