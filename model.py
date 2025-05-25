@@ -15,7 +15,7 @@ from sklearn.metrics import (
     classification_report,
     roc_auc_score,
     f1_score,
-    roc_curve # Importar aquí si no está al inicio del archivo
+    roc_curve 
 )
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import matplotlib.pyplot as plt
