@@ -6,98 +6,141 @@
     <title>Inicio - Vendedores Informales Chía</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="static/images/ESCUDO-COLOR-H.png">
-                <span class="ms-2">Proyecto Vendedores Chía</span>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container d-block">
+            <a class="navbar-brand d-flex align-items-center mb-2" href="/">
+                <img src="static/images/ESCUDO-COLOR-H.png" alt="Logo Universidad de Cundinamarca" style="height: 40px;">
+                <span class="ms-2 fs-4 fw-bold">Proyecto Vendedores Chía</span>
             </a>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link active" href="/">Inicio</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/datos">Datos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/prediccion">Predicción</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/graficas">Gráficas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/referencias">Referencias</a>
-                </li>
-            </ul>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/datos">Ingenieria de Datos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prediccion">Predicción</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/graficas">Gráficas</a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="/referencias">Referencias</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <header class="jumbotron">
-        <div class="container">
-            <h1 class="display-4">Modelo de Segmentación para Vendedores Ambulantes en Chía</h1>
-            <p class="lead">
-                Predicción de Patrones de Asentamiento y Desarrollo Sostenible
-            </p>
-            <a href="/prediccion" class="btn btn-primary btn-lg">
-                Realizar Predicción
-            </a>
-        </div>
-    </header>
-
     <main class="container">
         <section class="section-title text-center mb-5">
-            <h2>Descripción del Proyecto</h2>
-        </section>
-        <section>
-            <p>
-                En el municipio de Chía, los vendedores informales representan una parte importante del entorno económico,
-                pero sus características y condiciones aún no están suficientemente documentadas. Este proyecto busca
-                caracterizarlos mediante técnicas de análisis y predicción de datos, con el fin de identificar patrones y
-                perfiles que puedan ser útiles para el diseño de políticas públicas o programas de apoyo.
-            </p>
-            <p>
-                Desde la ingeniería de sistemas, se aplican herramientas de ciencia de datos que permiten transformar la
-                información recolectada en conocimiento útil para la toma de decisiones. El objetivo general es desarrollar
-                un modelo de análisis y predicción que permita caracterizar los perfiles de los vendedores informales del
-                municipio de Chía, utilizando técnicas de ciencia de datos y machine learning, con el fin de generar
-                información útil para la toma de decisiones en políticas de inclusión y desarrollo económico.
+            <h1>Modelo de Segmentación para Vendedores Ambulantes en Chía</h1>
+            <p class="lead">
+                Este proyecto busca comprender y predecir patrones de asentamiento y niveles de vulnerabilidad
+                en vendedores informales del municipio de Chía, Cundinamarca, utilizando técnicas de ciencia de datos
+                para orientar políticas públicas y promover un desarrollo sostenible.
             </p>
         </section>
-        <section class="section-title text-center mt-5 mb-5">
-            <h2>Objetivos del Proyecto</h2>
-        </section>
+
         <section class="row mb-5">
             <div class="col-md-6 mb-4">
-                <div class="card">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title">Objetivo General</h3>
+                        <h2 class="card-title fw-bold text-primary">Contexto y Problemática</h2>
                         <p class="card-text">
-                            Desarrollar un modelo de análisis y predicción que permita caracterizar los perfiles de los
-                            vendedores informales del municipio de Chía, utilizando técnicas de ciencia de datos y machine learning,
-                            con el fin de generar información útil para la toma de decisiones en políticas de inclusión
-                            y desarrollo económico.
+                            En Chía, los vendedores informales representan una parte esencial de la economía local,
+                            pero a menudo operan en condiciones de vulnerabilidad, enfrentando inestabilidad laboral
+                            y falta de acceso a programas de apoyo. La carencia de datos estructurados y un análisis
+                            profundo sobre sus perfiles y necesidades ha limitado la capacidad de las autoridades
+                            municipales para desarrollar políticas públicas efectivas que fomenten su inclusión y bienestar.
+                        </p>
+                        <p class="card-text">
+                            Este proyecto aborda directamente esta problemática al caracterizar a la población de
+                            vendedores informales, permitiendo una mejor comprensión de sus condiciones y la predicción
+                            de sus niveles de vulnerabilidad, lo cual es crucial para la asignación eficiente de recursos
+                            y el diseño de estrategias de formalización.
                         </p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title">Objetivos Específicos</h3>
+                        <h2 class="card-title fw-bold text-info">Objetivos del Proyecto</h2>
                         <ul class="list-unstyled">
-                            <li>Recolectar y depurar los datos existentes sobre los vendedores informales del municipio de Chía.</li>
-                            <li>Identificar las variables clave que influyen en las condiciones laborales y económicas de los vendedores informales.</li>
-                            <li>Aplicar técnicas de análisis exploratorio para visualizar patrones, tendencias y correlaciones en los datos.</li>
-                            <li>Diseñar y entrenar un modelo de machine learning para clasificar y predecir perfiles de vendedores informales.</li>
-                            <li>Evaluar el desempeño del modelo predictivo y su capacidad para generar información confiable.</li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Identificar Perfiles:</strong> Caracterizar a los vendedores informales
+                                mediante el análisis de variables sociodemográficas y económicas.
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Predecir Vulnerabilidad:</strong> Desarrollar un modelo de Machine Learning
+                                para predecir el nivel de vulnerabilidad (bajo, medio, alto) de los vendedores.
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Generar Insights:</strong> Proporcionar información valiosa para la toma
+                                de decisiones en políticas públicas y programas de apoyo.
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Optimizar Recursos:</strong> Contribuir a la asignación eficiente de
+                                recursos municipales, enfocando las ayudas donde más se necesitan.
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Crear Herramienta Interactiva:</strong> Implementar una plataforma web
+                                para visualizar y explorar los resultados del modelo, facilitando el acceso a la
+                                información y la capacidad para generar información confiable.
+                            </li>
                         </ul>
                     </div>
                 </div>
-            </div>            
+            </div>
         </section>
+
         <section class="row mb-5">
-            <div class="col-md-6 offset-md-3">  <div class="card shadow-sm h-100">                    
+            <div class="col-md-12">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="card-title fw-bold text-warning">Metodología CRISP-ML(Q)</h2>
+                        <p class="card-text">
+                            Para el desarrollo de este proyecto, se adoptó la metodología CRISP-ML(Q) (Cross-Industry Standard Process for Machine Learning with Quality Assurance),
+                            una extensión de CRISP-DM adaptada específicamente para proyectos de Machine Learning e incluyendo un enfoque en la calidad.
+                            Esta metodología proporciona un marco estructurado y robusto para abordar las complejidades de los proyectos de ciencia de datos,
+                            asegurando la calidad y la efectividad del modelo desarrollado.
+                        </p>
+                        <div class="text-center mt-4 mb-4">
+                            <img src="{{ url_for('static', filename='images/CRISP_ML.png') }}" class="img-fluid" alt="Diagrama de la metodología CRISP-ML(Q)" style="max-width: 80%; height: auto;">
+                            <small class="form-text text-muted">Imagen: Metodología CRISP-ML(Q)</small>
+                        </div>
+                        <p class="card-text">
+                            Las fases principales de CRISP-ML(Q) aplicadas en este proyecto incluyen:
+                        </p>
+                        <ul>
+                            <li><strong>Entendimiento del Negocio (Business Understanding):</strong> Definición clara de los objetivos del proyecto desde la perspectiva del negocio y las necesidades del municipio de Chía respecto a los vendedores informales.</li>
+                            <li><strong>Entendimiento de los Datos (Data Understanding):</strong> Recopilación, exploración y verificación inicial de los datos disponibles para identificar su relevancia y calidad.</li>
+                            <li><strong>Preparación de los Datos (Data Preparation):</strong> Limpieza, transformación y selección de las características (features) adecuadas para el modelado, incluyendo el manejo de valores nulos y la codificación de variables categóricas.</li>
+                            <li><strong>Modelado (Modeling):</strong> Selección y aplicación de algoritmos de Machine Learning, como la regresión logística, y entrenamiento del modelo con los datos preparados.</li>
+                            <li><strong>Evaluación (Evaluation):</strong> Análisis del rendimiento del modelo utilizando métricas como precisión, recall, F1-score y la matriz de confusión, y validación cruzada para asegurar su robustez.</li>
+                            <li><strong>Despliegue (Deployment):</strong> Integración del modelo en una aplicación web interactiva para facilitar su uso y la visualización de las predicciones.</li>
+                            <li><strong>Monitoreo y Mantenimiento (Monitoring & Maintenance):</strong> Asegurar la continua relevancia y precisión del modelo a lo largo del tiempo, con mecanismos para su actualización y mejora.</li>
+                            <li><strong>Aseguramiento de Calidad (Quality Assurance - Q):</strong> Integrado en todas las fases para garantizar que los resultados sean confiables, precisos y cumplan con los requisitos del negocio.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="row mb-5">
+            <div class="col-md-6 offset-md-3">
+                <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h2>Objetivo de Desarrollo Sostenible (ODS) 8</h2>
                         <h3 class="card-title fw-bold text-success">Trabajo Decente y Crecimiento Económico</h3>

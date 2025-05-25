@@ -6,133 +6,372 @@
     <title>Gráficas - Caracterización de Vendedores Informales</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <span class="ms-2">Proyecto Vendedores Chía</span>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container d-block">
+            <a class="navbar-brand d-flex align-items-center mb-2" href="/">
+                <img src="{{ url_for('static', filename='images/ESCUDO-COLOR-H.png') }}" alt="Logo Universidad de Cundinamarca" style="height: 40px;">
+                <span class="ms-2 fs-4 fw-bold">Proyecto Vendedores Chía</span>
             </a>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Inicio</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/datos">Datos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/prediccion">Predicción</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/graficas">Gráficas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/referencias">Referencias</a>
-                </li>
-            </ul>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/datos">Ingenieria de Datos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prediccion">Predicción</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/graficas">Gráficas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/referencias">Referencias</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <main class="container">
-    <div class="jumbotron">
-        <h1>Visualización de Datos</h1>
-        <p>Explora las gráficas generadas a partir del análisis de los vendedores informales en Chía.</p>
-    </div>
+    <main class="container my-5">
+        <section class="section-title text-center mb-5">
+            <h2>Análisis Visual del Dataset y Rendimiento del Modelo</h2>
+            <p class="lead">
+                Explora las características demográficas de los vendedores informales y evalúa el desempeño
+                del modelo predictivo a través de las siguientes visualizaciones clave.
+            </p>
+        </section>
 
-    {% if error %}
-    <div class="alert alert-danger mb-4">
-        <h4>Error</h4>
-        <p>{{ error }}</p>
-    </div>
-    {% endif %}
+        {# Nueva sección para la Explicación del Modelo #}
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Sobre el Modelo de Predicción</h3>
+                        <p class="card-text">
+                            El modelo utilizado para clasificar los niveles de vulnerabilidad es una
+                            <strong class="text-primary">Regresión Logística</strong>. Este es un algoritmo
+                            de clasificación robusto y ampliamente utilizado, especialmente adecuado para predecir
+                            la probabilidad de que una instancia pertenezca a una clase específica (en este caso,
+                            diferentes niveles de vulnerabilidad).
+                        </p>
+                        <p class="card-text">
+                            Para optimizar su rendimiento y asegurar predicciones precisas, se implementaron varias
+                            técnicas avanzadas durante su entrenamiento:
+                        </p>
+                        <ul>
+                            <li>
+                                <strong class="text-info">SMOTE (Synthetic Minority Over-sampling Technique):</strong>
+                                Aplicada para abordar el desequilibrio en las clases de vulnerabilidad del dataset.
+                                SMOTE genera ejemplos sintéticos para la clase minoritaria, ayudando al modelo a
+                                aprender de manera más efectiva de todos los grupos y a evitar sesgos hacia la clase mayoritaria.
+                            </li>
+                            <li>
+                                <strong class="text-info">GridSearchCV:</strong> Utilizado para realizar una
+                                búsqueda exhaustiva de los mejores hiperparámetros para el modelo de Regresión Logística.
+                                Esto asegura que el modelo se ajuste de la manera más óptima a los datos, maximizando
+                                su capacidad predictiva y generalización.
+                            </li>
+                        </ul>
+                        <p class="card-text">
+                            Gracias a estas optimizaciones, el modelo ha demostrado un excelente desempeño en las
+                            pruebas, lo que se refleja en las métricas de evaluación presentadas en las siguientes secciones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# Fin de Nueva sección para Explicación del Modelo #}
 
-    <div class="row">
-        {% if graficas.distribucion_vulnerabilidad %}
-        <div class="col-md-12 mb-12">
-            <h3>Distribución de Niveles de Vulnerabilidad</h3>
-            <img src="{{ url_for('static', filename='images/distribucion_vulnerabilidad.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Muestra cuántos vendedores se encuentran en niveles bajo, medio o alto de vulnerabilidad según su perfil.</p>
+        {% if error %}
+        <div class="alert alert-danger text-center" role="alert">
+            <h4>Error al cargar las gráficas:</h4>
+            <p>{{ error }}</p>
+            <p>Asegúrate de que el modelo haya sido entrenado y las gráficas generadas correctamente.</p>
         </div>
         {% endif %}
 
-        {% if graficas.importancia_caracteristicas %}
-        <div class="col-md-12 mb-12">
-            <h3>Importancia de Características</h3>
-            <img src="{{ url_for('static', filename='images/importancia_caracteristicas.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Representa qué variables influyen más en el modelo de predicción del nivel de vulnerabilidad.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Matriz de Confusión</h3>
+                        <p class="card-text">
+                            Esta gráfica es fundamental para entender el rendimiento de nuestro modelo de clasificación.
+                            Muestra un resumen visual de las predicciones del modelo frente a los valores reales.
+                            Cada celda indica el número de instancias donde la clase real (fila) fue predicha como
+                            una clase específica (columna). Nos permite identificar fácilmente los aciertos
+                            (diagonal principal) y los errores (fuera de la diagonal), como los falsos positivos y falsos negativos.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/matriz_confusion.png') }}" class="img-fluid" alt="Matriz de Confusión del Modelo">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra cuántas predicciones fueron correctas o incorrectas por cada nivel de vulnerabilidad (Vulnerable, No Vulnerable).
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
 
-    <div class="row">
-        {% if graficas.distribucion_genero %}
-        <div class="col-md-12 mb-12">
-            <h3>Distribución por Género</h3>
-            <img src="{{ url_for('static', filename='images/distribucion_genero.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Visualiza la proporción de hombres y mujeres entre los vendedores informales.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Informe de Clasificación del Modelo</h3>
+                        <p class="card-text">
+                            El informe de clasificación proporciona métricas detalladas para cada clase de vulnerabilidad
+                            (Bajo, Medio, Alto), incluyendo:
+                        </p>
+                        <ul>
+                            <li><strong>Precisión (Precision):</strong> Proporción de predicciones positivas correctas.</li>
+                            <li><strong>Sensibilidad (Recall):</strong> Proporción de positivos reales que fueron identificados correctamente.</li>
+                            <li><strong>Puntuación F1 (F1-Score):</strong> Media armónica de precisión y sensibilidad, útil cuando hay desequilibrio de clases.</li>
+                            <li><strong>Soporte (Support):</strong> Número de ocurrencias reales de cada clase en el conjunto de prueba.</li>
+                        </ul>
+                        <p class="card-text">
+                            Estas métricas son cruciales para evaluar la efectividad del modelo en la identificación
+                            de cada nivel de vulnerabilidad.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/reporte_modelo.png') }}" class="img-fluid" alt="Informe de Clasificación del Modelo">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Métricas de rendimiento del modelo por cada clase de vulnerabilidad.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
 
-        {% if graficas.distribucion_edad %}
-        <div class="col-md-12 mb-12">
-            <h3>Distribución de Edad</h3>
-            <img src="{{ url_for('static', filename='images/distribucion_edad.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Muestra la distribución de edades de los vendedores, útil para identificar rangos etarios predominantes.</p>
+        {# Nueva sección para Curva ROC #}
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Curva ROC (Receiver Operating Characteristic)</h3>
+                        <p class="card-text">
+                            La Curva ROC es una herramienta gráfica que ilustra el rendimiento de un modelo de clasificación
+                            binaria en diferentes umbrales de discriminación. Muestra la relación entre la Tasa de Verdaderos Positivos
+                            (sensibilidad) y la Tasa de Falsos Positivos (1 - especificidad). Cuanto más se acerque la curva
+                            a la esquina superior izquierda, mejor será el rendimiento del modelo. El área bajo la curva (AUC-ROC)
+                            proporciona una medida agregada del rendimiento en todos los umbrales.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/curva_roc.png') }}" class="img-fluid" alt="Curva ROC del Modelo">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra el rendimiento del modelo en la clasificación entre niveles de vulnerabilidad.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
+        {# Fin de Nueva sección para Curva ROC #}
 
-    <div class="row">
-        {% if graficas.asociacion %}
-        <div class="col-md-6 mb-4">
-            <h3>Participación en Asociaciones</h3>
-            <img src="{{ url_for('static', filename='images/asociacion.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Indica qué porcentaje de vendedores pertenece a alguna asociación organizada.</p>
+        {# Nueva sección para Distribución de Probabilidades #}
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Distribución de Probabilidades de Clasificación</h3>
+                        <p class="card-text">
+                            Esta gráfica visualiza la distribución de las probabilidades que el modelo asigna a cada
+                            instancia de pertenecer a una clase específica. Nos ayuda a entender qué tan confiado
+                            está el modelo en sus predicciones. Idealmente, las distribuciones de probabilidades para
+                            diferentes clases deberían estar bien separadas, indicando una clara distinción entre los grupos.
+                            La superposición de distribuciones podría sugerir incertidumbre en las predicciones.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/prob_distribution.png') }}" class="img-fluid" alt="Distribución de Probabilidades">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra la distribución de las probabilidades predichas por el modelo para cada clase.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
+        {# Fin de Nueva sección para Distribución de Probabilidades #}
 
-        {% if graficas.lgbtiq %}
-        <div class="col-md-6 mb-4">
-            <h3>Identificación LGBTIQ+</h3>
-            <img src="{{ url_for('static', filename='images/lgbtiq.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Permite conocer cuántos vendedores se identifican como parte de la comunidad LGBTIQ+.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Distribución de los Niveles de Vulnerabilidad</h3>
+                        <p class="card-text">
+                            Esta gráfica de barras muestra la cantidad de vendedores informales clasificados en cada
+                            nivel de vulnerabilidad: Bajo, Medio y Alto. Es importante para entender la composición
+                            actual de la población de vendedores y dónde se concentran las mayores necesidades de apoyo.
+                            Un desequilibrio en esta distribución puede influir en el entrenamiento del modelo.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/distribucion_vulnerabilidad.png') }}" class="img-fluid" alt="Distribución de Vulnerabilidad">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra el conteo de vendedores por nivel de vulnerabilidad en el dataset.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
 
-    <div class="row">
-        {% if graficas.discapacidad %}
-        <div class="col-md-12 mb-12">
-            <h3>Personas con Discapacidad</h3>
-            <img src="{{ url_for('static', filename='images/discapacidad.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Muestra cuántos vendedores presentan alguna condición de discapacidad.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Importancia de las Características en el Modelo</h3>
+                        <p class="card-text">
+                            Esta visualización, típicamente un gráfico de barras, ilustra la relevancia de cada característica
+                            (como Género, Edad, si es Adulto Mayor, etc.) en la predicción del nivel de vulnerabilidad.
+                            Las características con valores más altos son las que el modelo considera más influyentes
+                            para realizar sus clasificaciones. Esto nos ayuda a comprender qué factores son los más
+                            determinantes para la vulnerabilidad de los vendedores.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/importancia_caracteristicas.png') }}" class="img-fluid" alt="Importancia de Características">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Representa la influencia de cada variable en la predicción del modelo.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
 
-        {% if graficas.matriz_confusion %}
-        <div class="col-md-12 mb-12">
-            <h3>Matriz de Confusión</h3>
-            <img src="{{ url_for('static', filename='images/matriz_confusion.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Visualiza el desempeño del modelo, mostrando cuántas predicciones fueron correctas o incorrectas por clase.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Distribución de Vendedores por Género</h3>
+                        <p class="card-text">
+                            Este gráfico de pastel o de barras muestra la proporción de hombres y mujeres
+                            entre los vendedores informales. Es vital para identificar posibles disparidades de género
+                            y para asegurar que las políticas públicas sean inclusivas y equitativas,
+                            abordando las necesidades específicas de cada grupo.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/distribucion_genero.png') }}" class="img-fluid" alt="Distribución por Género">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Proporción de vendedores por género en el dataset.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
 
-    <div class="row">
-        {% if graficas.reporte_modelo %}
-        <div class="col-md-12 mb-5">
-            <h3>Informe del Modelo (Classification Report)</h3>
-            <img src="{{ url_for('static', filename='images/reporte_modelo.png') }}" class="img-fluid">
-            <p class="text-muted mt-2">Muestra las métricas clave del modelo: precisión, sensibilidad (recall) y f1-score para cada clase.</p>
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Distribución de Vendedores por Edad</h3>
+                        <p class="card-text">
+                            Este histograma o gráfico de barras muestra la distribución de edades de los vendedores,
+                            permitiendo identificar los rangos de edad con mayor concentración. Comprender la demografía
+                            de edad es crucial para diseñar programas de apoyo que sean culturalmente apropiados
+                            y efectivos para diferentes grupos etarios, como jóvenes, adultos o adultos mayores.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/distribucion_edad.png') }}" class="img-fluid" alt="Distribución por Edad">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra el conteo de vendedores por rango de edad.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
+
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Vendedores que Pertenecen a una Asociación</h3>
+                        <p class="card-text">
+                            Este gráfico (usualmente de barras o pastel) visualiza la proporción de vendedores
+                            que están afiliados a alguna asociación frente a los que no lo están. La pertenencia a
+                            asociaciones puede ser un indicador de acceso a redes de apoyo, información o procesos
+                            de formalización. Esta información es valiosa para fomentar la organización y el empoderamiento
+                            de la comunidad de vendedores.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/asociacion.png') }}" class="img-fluid" alt="Pertenencia a Asociación">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Indica cuántos vendedores pertenecen a alguna asociación.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Vendedores Identificados como LGBTIQ+</h3>
+                        <p class="card-text">
+                            Esta gráfica (generalmente de barras o pastel) muestra la cantidad o proporción de
+                            vendedores que se identifican como parte de la comunidad LGBTIQ+. Es crucial para
+                            reconocer y abordar las necesidades específicas y las posibles vulnerabilidades adicionales
+                            que este grupo pueda enfrentar, promoviendo la inclusión y la diversidad en las políticas.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/identificado_lgbtiq+.png') }}" class="img-fluid" alt="Identificación LGBTIQ+">
+                            <hr>
+                            <small class="form-text text-muted mt-2">
+                                Muestra cuántos vendedores se identifican con la comunidad LGBTIQ+.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-10 offset-md-1">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title fw-bold text-success mb-3">Vendedores con Discapacidad</h3>
+                        <p class="card-text">
+                            Esta gráfica presenta la cantidad o proporción de vendedores informales que reportan
+                            alguna condición de discapacidad. Esta información es fundamental para identificar
+                            a una población vulnerable y diseñar programas de apoyo específicos que garanticen
+                            su acceso a oportunidades y mejoren sus condiciones de vida y trabajo.
+                        </p>
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='reports/discapacidad.png') }}" class="img-fluid mb-2" alt="Vendedores con Discapacidad">
+                            <p class="text-muted small">
+                                Muestra cuántos vendedores presentan alguna condición de discapacidad.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
 
     <footer class="bg-light text-center py-4 mt-5">
-        <p class="text-muted">Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.</p>
+        <p class="text-muted">
+            Proyecto desarrollado por Jennifer Andrea Espitia Porras y Nicolas Gutiérrez Reyes. Universidad de Cundinamarca - 2025.
+        </p>
     </footer>
-</main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
